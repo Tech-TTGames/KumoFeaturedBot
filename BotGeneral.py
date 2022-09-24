@@ -59,6 +59,7 @@ async def startvote(ctx,channel: discord.TextChannel, clear: bool=True, embbeded
         await ctx.send(f"Clearing channel...")
         await ctx.channel.purge()
         await ctx.send(f"Channel has been cleared.",delete_after=10)
+        await ctx.send("Send suggestions here!  Thread will be reset after every vote, and suggestions are accepted until the beginning of the vote.\nOne suggestion/user, please!  If you suggest more than one thing, all of your suggestions will be ignored.\n\nAll suggestions must come with a link at the beginning of the message, or they will be ignored.\n\nThis thread is not for conversation.  If I have to skip over a large conversation while checking for suggestions to put in the vote, I will ignore the suggestions of those involved")
 
 
 @bot.command()
