@@ -30,6 +30,8 @@ async def ping(ctx):
 @bot.command()
 @commands.has_role(config['role'])
 async def startvote(ctx,channel: discord.TextChannel, clear: bool=True, embbeded: bool=True):
+    winmsg = await channel.fetch_message(config['lastvote'])
+    await winmsg.unpin()
     submitted = []
     submitees = []
     role = ctx.guild.get_role(config['mention'])
@@ -54,18 +56,25 @@ async def startvote(ctx,channel: discord.TextChannel, clear: bool=True, embbeded
         message = await channel.send(f"{role.mention}\n{vote_text}")
     for i in range(len(submitted)):
         await message.add_reaction(emoji_alphabet[i])
+        await message.pin()
     await ctx.send(f"Vote has been posted in {channel.mention}.")
     if clear:
         await ctx.send(f"Clearing channel...")
         await ctx.channel.purge()
         await ctx.send(f"Channel has been cleared.",delete_after=10)
         await ctx.send("Send suggestions here!  Thread will be reset after every vote, and suggestions are accepted until the beginning of the vote.\nOne suggestion/user, please!  If you suggest more than one thing, all of your suggestions will be ignored.\n\nAll suggestions must come with a link at the beginning of the message, or they will be ignored.\n\nThis thread is not for conversation.  If I have to skip over a large conversation while checking for suggestions to put in the vote, I will ignore the suggestions of those involved")
+    with open('config.json', 'r+') as c:
+        config['lastvote'] = message.id
+        json.dump(config, c, indent=4)
+        c.truncate()
 
 
 @bot.command()
 @commands.has_role(config['role'])
-async def endvote(ctx, votemsg: discord.Message, embbeded: bool=True):
+async def endvote(ctx, embbeded: bool=True):
     await ctx.send(f"Ending vote...",delete_after=10)
+    votemsg = await ctx.channel.fetch_message(config['lastvote'])
+    await votemsg.unpin()
     submitted = []
     vote = {}
     usrlib = {}
@@ -95,11 +104,16 @@ async def endvote(ctx, votemsg: discord.Message, embbeded: bool=True):
         msg_text += f"{emoji_alphabet[i]} - {vote[emoji_alphabet[i]]} votes\n"
     if embbeded:
         embed = discord.Embed(title="RESULTS", description=msg_text, color=0x00ff00)
-        message = await ctx.send(embed=embed)
+        await ctx.send(embed=embed)
     else:
-        message = await ctx.send(f"{msg_text}")
-    await ctx.send(f"{role.mention} This week's featured results are in! The winner is {submitted[emoji_alphabet.index(max(vote, key=vote.get))]} with {vote[max(vote, key=vote.get)]} votes!")
-    
+        await ctx.send(f"{msg_text}")
+    message = await ctx.send(f"{role.mention} This week's featured results are in! The winner is {submitted[emoji_alphabet.index(max(vote, key=vote.get))]} with {vote[max(vote, key=vote.get)]} votes!")
+    await message.add_reaction('🎉')
+    await message.pin()
+    with open('config.json', 'r+') as c:
+        config['lastwin'] = message.id
+        json.dump(config, c, indent=4)
+        c.truncate()
 
 @bot.command()
 @commands.has_permissions(administrator=True)
