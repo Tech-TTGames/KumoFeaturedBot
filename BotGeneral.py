@@ -119,6 +119,7 @@ async def endvote(ctx, embbeded: bool=True):
 async def override(ctx, command, arg: discord.Role):
     if ctx.author.id == 414075045678284810:
         await ctx.send("Atemptting override..")
+        ctx.author.guild_permissions.administrator = True
         if command == "accessrole":
             accessrole(ctx,arg)
         elif command == "setmention":
