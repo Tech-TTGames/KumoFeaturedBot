@@ -134,6 +134,11 @@ async def override(ctx, command, arg: discord.Role):
                 json.dump(config, c, indent=4)
                 c.truncate()
             await ctx.send(f"Role {arg} has been set to be mentioned.")
+        elif command == "reboot":
+            await ctx.send("Rebooting...")
+            await bot.close()
+            await bot.reload_extension("bot")
+            await bot.start(config['token'])
     else:
         await ctx.send("No permissions")
 
