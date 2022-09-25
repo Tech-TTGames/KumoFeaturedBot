@@ -121,9 +121,19 @@ async def override(ctx, command, arg: discord.Role):
         await ctx.send("Atemptting override..")
         ctx.author.guild_permissions.administrator = True
         if command == "accessrole":
-            accessrole(ctx,arg)
+            role  = arg.id
+            with open('config.json', 'r+') as c:
+                config['role'] = role
+                json.dump(config, c, indent=4)
+                c.truncate()
+            await ctx.send(f"Role {arg} has been set as to have access.")
         elif command == "setmention":
-            setmention(ctx, arg)
+            role = arg.id
+            with open('config.json', 'r+') as c:
+                config['mention'] = role
+                json.dump(config, c, indent=4)
+                c.truncate()
+            await ctx.send(f"Role {arg} has been set to be mentioned.")
     else:
         await ctx.send("No permissions")
 
