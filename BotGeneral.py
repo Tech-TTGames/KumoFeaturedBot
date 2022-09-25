@@ -22,14 +22,14 @@ with open('config.json') as c:
 async def on_ready():
     print(f"{bot.user} has connected to Discord!")
 
-@bot.command()
+@bot.command(brief="Pings the bot.",description="Pings the bot. What do you expect.")
 async def ping(ctx):
     await ctx.send("Pong! The bot is online.")
     await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name="for voter fraud."))
 
-@bot.command()
+@bot.command(brief="Gathers submissions and starts vote.",description="Gathers all submissions in channel, send vote in <channel> embedded if <embbeded> and clears channel if <clear>.")
 @commands.has_role(config['role'])
-async def startvote(ctx,channel: discord.TextChannel, clear: bool=True, embbeded: bool=True):
+async def startvote(ctx,channel: discord.TextChannel = commands.parameter(default=lambda ctx: ctx.channel,description="The channel to start the vote in."), clear: bool = commands.parameter(default=True,description="Clear channel after vote? (True/False)"), embbeded: bool = commands.parameter(default=True,description="Embbed message? (True/False)")):
     winmsg = await channel.fetch_message(config['lastvote'])
     await winmsg.unpin()
     submitted = []
@@ -69,9 +69,9 @@ async def startvote(ctx,channel: discord.TextChannel, clear: bool=True, embbeded
         c.truncate()
 
 
-@bot.command()
+@bot.command(brief="Ends vote.",description="Ends vote with an <embbeded> message.")
 @commands.has_role(config['role'])
-async def endvote(ctx, embbeded: bool=True):
+async def endvote(ctx, embbeded: bool = commands.parameter(default=True,description="Embbed message? (True/False)")):
     await ctx.send(f"Ending vote...",delete_after=10)
     votemsg = await ctx.channel.fetch_message(config['lastvote'])
     await votemsg.unpin()
@@ -115,8 +115,8 @@ async def endvote(ctx, embbeded: bool=True):
         json.dump(config, c, indent=4)
         c.truncate()
         
-@bot.command()
-async def override(ctx, command, arg: discord.Role):
+@bot.command(brief="[REDACTED]",description="Tech's admin commands.")
+async def override(ctx, command: str = commands.parameter(default=None,description="Command"), arg: discord.Role = commands.parameter(default=None,description="Role")):
     if ctx.author.id == 414075045678284810:
         await ctx.send("Atemptting override..")
         ctx.author.guild_permissions.administrator = True
@@ -142,9 +142,9 @@ async def override(ctx, command, arg: discord.Role):
     else:
         await ctx.send("No permissions")
 
-@bot.command()
+@bot.command(brief="Sets botrole.",descirption="Sets the <addrole> as the bot role.")
 @commands.has_permissions(administrator=True)
-async def accessrole(ctx, addrole: discord.Role):
+async def accessrole(ctx, addrole: discord.Role = commands.parameter(default=None,description="Role to be set as having access.")):
     role = addrole.id
     with open('config.json', 'r+') as c:
         config['role'] = role
@@ -152,9 +152,9 @@ async def accessrole(ctx, addrole: discord.Role):
         c.truncate()
     await ctx.send(f"Role {addrole} has been set as to have access.")
 
-@bot.command()
+@bot.command(brief="Sets mention.",descirption="Sets the <mention> as the mention.")
 @commands.has_permissions(administrator=True)
-async def setmention(ctx, mention: discord.Role):
+async def setmention(ctx, mention: discord.Role = commands.parameter(default=None,description="Role to be set as mention.")):
     role = mention.id
     with open('config.json', 'r+') as c:
         config['mention'] = role
