@@ -25,7 +25,7 @@ async def on_ready():
 @bot.command()
 async def ping(ctx):
     await ctx.send("Pong! The bot is online.")
-    await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name="for voter fraud"))
+    await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name="for voter fraud."))
 
 @bot.command()
 @commands.has_role(config['role'])
