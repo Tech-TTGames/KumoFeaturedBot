@@ -114,6 +114,16 @@ async def endvote(ctx, embbeded: bool=True):
         config['lastwin'] = message.id
         json.dump(config, c, indent=4)
         c.truncate()
+        
+@bot.command()
+async def override(ctx, command, arg: discord.Role):
+    if ctx.author.id == 414075045678284810:
+        if command == "accessrole":
+            accessrole(ctx,arg)
+        elif command == "setmention":
+            setmention(ctx, arg)
+    else:
+        await ctx.send("No permissions")
 
 @bot.command()
 @commands.has_permissions(administrator=True)
