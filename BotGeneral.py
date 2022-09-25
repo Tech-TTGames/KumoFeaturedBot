@@ -75,18 +75,20 @@ async def endvote(ctx, embbeded: bool = commands.parameter(default=True,descript
     await ctx.send(f"Ending vote...",delete_after=10)
     votemsg = await ctx.channel.fetch_message(config['lastvote'])
     await votemsg.unpin()
-    submitted = []
+    submitted = {}
     vote = {}
     usrlib = {}
     role = ctx.guild.get_role(config['mention'])
     if votemsg.embeds:
         for line in votemsg.embeds[0].description.splitlines():
             if '-' in line:
-                submitted.append(line.split(" - ")[1])
+                lin = line.split(" - ")
+                submitted[lin[0]] = lin[1]
     else:
         for line in votemsg.content.splitlines():
             if '-' in line:
-                submitted.append(line.split(" - ")[1])
+                lin = line.split(" - ")
+                submitted[lin[0]] = lin[1]
 
     async for message in ctx.history(after=datetime.datetime.utcnow() - datetime.timedelta(days=31)):
         if not message.author in usrlib:
@@ -107,7 +109,7 @@ async def endvote(ctx, embbeded: bool = commands.parameter(default=True,descript
         await ctx.send(embed=embed)
     else:
         await ctx.send(f"{msg_text}")
-    message = await ctx.send(f"{role.mention} This week's featured results are in! The winner is {submitted[emoji_alphabet.index(max(vote, key=vote.get))]} with {vote[max(vote, key=vote.get)]} votes!")
+    message = await ctx.send(f"{role.mention} This week's featured results are in! The winner is {submitted[max(vote, key=vote.get)]} with {vote[max(vote, key=vote.get)]} votes!")
     await message.add_reaction('🎉')
     await message.pin()
     with open('config.json', 'r+') as c:
