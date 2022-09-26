@@ -115,7 +115,7 @@ async def endvote(ctx,embbeded: bool = commands.parameter(default=True,descripti
         else:
             usrlib[message.author] += 1
     for reaction in votemsg.reactions:
-        if reaction.emoji in emoji_alphabet:
+        if reaction.emoji in emoji_alphabet and emoji_alphabet.index(reactions.emoji) < len(submitted):
             vote[reaction.emoji] = 0
             async for user in reaction.users():
                 if usrlib[user] >= 5 and user != bot.user:
