@@ -1,6 +1,7 @@
 import discord
 import discord.ext.commands as commands
 import discord.ext.tasks as tasks
+import asyncio
 import logging
 import json
 import datetime
@@ -83,26 +84,24 @@ async def startvote(ctx,channel: discord.TextChannel = commands.parameter(defaul
         await ctx.send("Send suggestions here!  Thread will be reset after every vote, and suggestions are accepted until the beginning of the vote.\nOne suggestion/user, please!  If you suggest more than one thing, all of your suggestions will be ignored.\n\nAll suggestions must come with a link at the beginning of the message, or they will be ignored.\n\nThis thread is not for conversation.  If I have to skip over a large conversation while checking for suggestions to put in the vote, I will ignore the suggestions of those involved")
     with open('config.json', 'r+') as c:
         config['lastvote'] = message.id
-        if polltime:
-            config['endvote'] = (datetime.datetime.utcnow() + datetime.timedelta(hours=polltime)).isoformat()
-        else:
-            config['endvote'] = None
         config['channel'] = channel.id
         json.dump(config, c, indent=4)
         c.truncate()
+    await asyncio.sleep(polltime*3600)
+    await endvote(ctx,embbeded)
 
 
 @bot.command(brief="Ends vote.",description="Ends vote with an <embbeded> message.")
 @commands.has_role(config['role'])
 async def endvote(ctx,embbeded: bool = commands.parameter(default=True,description="Embbed message? (True/False)")):
-    channel = bot.get_channel(config['channel'])
-    await channel.send(f"Ending vote...",delete_after=10)  # type: ignore
-    votemsg = await channel.fetch_message(config['lastvote'])  # type: ignore
+    channel = ctx.guild.get_channel(config['channel'])
+    await channel.send(f"Ending vote...",delete_after=10)
+    votemsg = await channel.fetch_message(config['lastvote'])
     await votemsg.unpin()
     submitted = []
     vote = {}
     usrlib = {}
-    role = channel.guild.get_role(config['mention'])  # type: ignore
+    role = channel.guild.get_role(config['mention'])
     if votemsg.embeds:
         for line in votemsg.embeds[0].description.splitlines():
             if '-' in line:
@@ -112,17 +111,18 @@ async def endvote(ctx,embbeded: bool = commands.parameter(default=True,descripti
             if '-' in line:
                 submitted.append(line.split(" - ")[1])
 
-    async for message in channel.history(after=datetime.datetime.utcnow() - datetime.timedelta(days=31)):  # type: ignore
+    async for message in channel.history(after=datetime.datetime.utcnow() - datetime.timedelta(days=31)):
         if not message.author in usrlib:
             usrlib[message.author] = 1
         else:
             usrlib[message.author] += 1
     for reaction in votemsg.reactions:
-        if reaction.emoji in emoji_alphabet and emoji_alphabet.index(reactions.emoji) < len(submitted):
+        if reaction.emoji in emoji_alphabet and emoji_alphabet.index(reaction.emoji) < len(submitted):
             vote[reaction.emoji] = 0
             async for user in reaction.users():
-                if usrlib[user] >= 5 and user != bot.user:
-                    vote[reaction.emoji] += 1
+                if user != bot.user and user in usrlib:
+                    if usrlib[user] >= 5:
+                        vote[reaction.emoji] += 1
     msg_text = "This week's featured results are:\n"
     for i in range(len(vote)):
         msg_text += f"{emoji_alphabet[i]} - {vote[emoji_alphabet[i]]} votes\n"
@@ -145,10 +145,8 @@ async def override(ctx, command: str = commands.parameter(default=None,descripti
         await ctx.send("Atemptting override..")
         ctx.author.guild_permissions.administrator = True
         if command == "accessrole":
-            arg = ctx.guild.get_role(arg)
-            role  = arg.id  # type: ignore
             with open('config.json', 'r+') as c:
-                config['role'] = role
+                config['role'] = arg
                 json.dump(config, c, indent=4)
                 c.truncate()
             await ctx.send(f"Role {arg} has been set as to have access.")
@@ -156,7 +154,7 @@ async def override(ctx, command: str = commands.parameter(default=None,descripti
             arg = ctx.guild.get_role(arg)
             role = arg.id  # type: ignore
             with open('config.json', 'r+') as c:
-                config['mention'] = role
+                config['mention'] = arg
                 json.dump(config, c, indent=4)
                 c.truncate()
             await ctx.send(f"Role {arg} has been set to be mentioned.")
@@ -169,7 +167,7 @@ async def override(ctx, command: str = commands.parameter(default=None,descripti
             await ctx.send("Rebooting...")
             await bot.close()
         elif command == "close":
-            await endvote("INTERNAL")  # type: ignore
+            await endvote(ctx)
     else:
         await ctx.send("No permissions")
 
@@ -193,10 +191,4 @@ async def setmention(ctx, mention: discord.Role = commands.parameter(default=Non
         c.truncate()
     await ctx.send(f"Role {mention} has been set to be mentioned.")
 
-@tasks.loop(minutes=1)
-async def vote():
-    if config['endvote']:
-        if datetime.datetime.utcnow() >= datetime.datetime.fromisoformat(config['endvote']):
-            await endvote("INTERNAL")  # type: ignore
-
-bot.run(secret['token'])
+bot.run(secret['token'], log_handler=handler)
