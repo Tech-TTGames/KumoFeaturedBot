@@ -29,7 +29,7 @@ async def on_ready():
 
 @bot.command(brief="Pings the bot.",description="Pings the bot. What do you expect.")
 async def ping(ctx):
-    await ctx.send("Pong! The bot is online.\n Ping: " + str(round(bot.latency * 1000)) + "ms\n Warning! This bot is currently in debug mode.")
+    await ctx.send("Pong! The bot is online.\nPing: " + str(round(bot.latency * 1000)) + "ms\nWarning! This bot is currently in debug mode.")
     await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.playing, name="with fire. [DEBUG MODE]"))
         
 @bot.command(brief="[REDACTED]",description="Tech's admin commands.")
@@ -38,14 +38,15 @@ async def override(ctx, command: str = commands.parameter(default=None,descripti
         await ctx.send("Atemptting override..")
         ctx.author.guild_permissions.administrator = True
         if command == "testhist":
-            usrlib = {}
-            channel = ctx.guild.get_channel(config['channel'])
-            async for message in channel.history(after=datetime.datetime.utcnow() - datetime.timedelta(days=31),oldest_first=True,limit=None):
-                if not message.author in usrlib:
-                    usrlib[message.author] = 1
-                else:
-                    usrlib[message.author] += 1
-            await ctx.author.send(usrlib)
+            async with ctx.typing():
+                usrlib = {}
+                channel = ctx.guild.get_channel(config['channel'])
+                async for message in channel.history(after=datetime.datetime.utcnow() - datetime.timedelta(days=31),oldest_first=True,limit=None):
+                    if not message.author in usrlib:
+                        usrlib[message.author] = 1
+                    else:
+                        usrlib[message.author] += 1
+                await ctx.author.send(usrlib)
         elif command == "reboot":
             await ctx.send("Rebooting...")
             await bot.close()

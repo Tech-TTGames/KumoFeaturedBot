@@ -29,7 +29,7 @@ async def on_ready():
 
 @bot.command(brief="Pings the bot.",description="Pings the bot. What do you expect.")
 async def ping(ctx):
-    await ctx.send("Pong! The bot is online.\n Ping: " + str(round(bot.latency * 1000)) + "ms")
+    await ctx.send("Pong! The bot is online.\nPing: " + str(round(bot.latency * 1000)) + "ms")
     await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name="for voter fraud."))
 
 @bot.command(brief="Gathers submissions and starts vote.",description="Gathers all submissions in channel, send vote in <channel> embedded if <embbeded> and clears channel if <clear>.")
@@ -52,13 +52,14 @@ async def startvote(ctx,channel: discord.TextChannel = commands.parameter(defaul
                 submitted_old.append(line.split(" - ")[1])
     role = ctx.guild.get_role(config['mention'])
     await ctx.send(f"Gathering submissions...",delete_after=10)
-    async for message in ctx.history(after=datetime.datetime.utcnow() - datetime.timedelta(days=31)):
-        if message.content.startswith('https://') and not message.author in submitees:
-            url = str(re.search(r"(?P<url>https?://[^\s]+)", message.content).group("url"))
-            if not url in submitted_old and not url in submitted:
-                submitted.append(url)
-                submitees.append(message.author)
-    
+    async with ctx.typing():
+        async for message in ctx.history(after=datetime.datetime.utcnow() - datetime.timedelta(days=31),limit=None):
+            if message.content.startswith('https://') and not message.author in submitees:
+                url = str(re.search(r"(?P<url>https?://[^\s]+)", message.content).group("url"))
+                if not url in submitted_old and not url in submitted:
+                    submitted.append(url)
+                    submitees.append(message.author)
+        
     submitted = list(dict.fromkeys(submitted))
     await ctx.send(f"Found {len(submitted)} valid submission(s).\nPrepearing Vote...",delete_after=10)
     vote_text = ""
@@ -87,8 +88,10 @@ async def startvote(ctx,channel: discord.TextChannel = commands.parameter(defaul
         config['channel'] = channel.id
         json.dump(config, c, indent=4)
         c.truncate()
-    await asyncio.sleep(polltime*3600)
-    await endvote(ctx,embbeded)
+    if polltime:
+        await channel.send(f"Vote will close in {polltime} hours.")
+        await asyncio.sleep(polltime*3600)
+        await endvote(ctx,embbeded)
 
 
 @bot.command(brief="Ends vote.",description="Ends vote with an <embbeded> message.")
@@ -102,27 +105,29 @@ async def endvote(ctx,embbeded: bool = commands.parameter(default=True,descripti
     vote = {}
     usrlib = {}
     role = channel.guild.get_role(config['mention'])
-    if votemsg.embeds:
-        for line in votemsg.embeds[0].description.splitlines():
-            if '-' in line:
-                submitted.append(line.split(" - ")[1])
-    else:
-        for line in votemsg.content.splitlines():
-            if '-' in line:
-                submitted.append(line.split(" - ")[1])
-
-    async for message in channel.history(after=datetime.datetime.utcnow() - datetime.timedelta(days=31)):
-        if not message.author in usrlib:
-            usrlib[message.author] = 1
+    await channel.send("Gathering votes and applying fraud protection... (This may take a while)")
+    async with ctx.typing():
+        if votemsg.embeds:
+            for line in votemsg.embeds[0].description.splitlines():
+                if '-' in line:
+                    submitted.append(line.split(" - ")[1])
         else:
-            usrlib[message.author] += 1
-    for reaction in votemsg.reactions:
-        if reaction.emoji in emoji_alphabet and emoji_alphabet.index(reaction.emoji) < len(submitted):
-            vote[reaction.emoji] = 0
-            async for user in reaction.users():
-                if user != bot.user and user in usrlib:
-                    if usrlib[user] >= 5:
-                        vote[reaction.emoji] += 1
+            for line in votemsg.content.splitlines():
+                if '-' in line:
+                    submitted.append(line.split(" - ")[1])
+
+        async for message in channel.history(after=datetime.datetime.utcnow() - datetime.timedelta(days=31),oldest_first=True,limit=None):
+            if not message.author in usrlib:
+                usrlib[message.author] = 1
+            else:
+                usrlib[message.author] += 1
+        for reaction in votemsg.reactions:
+            if reaction.emoji in emoji_alphabet and emoji_alphabet.index(reaction.emoji) < len(submitted):
+                vote[reaction.emoji] = 0
+                async for user in reaction.users():
+                    if user != bot.user and user in usrlib:
+                        if usrlib[user] >= 5:
+                            vote[reaction.emoji] += 1
     msg_text = "This week's featured results are:\n"
     for i in range(len(vote)):
         msg_text += f"{emoji_alphabet[i]} - {vote[emoji_alphabet[i]]} votes\n"
