@@ -40,7 +40,7 @@ async def override(ctx, command: str = commands.parameter(default=None,descripti
         if command == "testhist":
             usrlib = {}
             channel = ctx.guild.get_channel(config['channel'])
-            async for message in channel.history(after=datetime.datetime.utcnow() - datetime.timedelta(days=31)):
+            async for message in channel.history(after=datetime.datetime.utcnow() - datetime.timedelta(days=31),oldest_first=True,limit=None):
                 if not message.author in usrlib:
                     usrlib[message.author] = 1
                 else:
