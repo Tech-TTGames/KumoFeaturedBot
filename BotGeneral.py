@@ -29,7 +29,7 @@ async def on_ready():
 
 @bot.command(brief="Pings the bot.",description="Pings the bot. What do you expect.")
 async def ping(ctx):
-    await ctx.send("Pong! The bot is online.")
+    await ctx.send("Pong! The bot is online.\n Ping: " + str(round(bot.latency * 1000)) + "ms")
     await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name="for voter fraud."))
 
 @bot.command(brief="Gathers submissions and starts vote.",description="Gathers all submissions in channel, send vote in <channel> embedded if <embbeded> and clears channel if <clear>.")
