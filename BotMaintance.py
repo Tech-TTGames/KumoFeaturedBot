@@ -40,13 +40,22 @@ async def override(ctx, command: str = commands.parameter(default=None,descripti
         if command == "testhist":
             async with ctx.typing():
                 usrlib = {}
+                vote = {}
                 channel = ctx.guild.get_channel(config['channel'])
+                votemsg = await channel.fetch_message(config['lastvote'])
                 async for message in channel.history(after=datetime.datetime.utcnow() - datetime.timedelta(days=31),oldest_first=True,limit=None):
                     if not message.author in usrlib:
                         usrlib[message.author] = 1
                     else:
                         usrlib[message.author] += 1
-                await ctx.author.send(usrlib)
+                for reaction in votemsg.reactions:
+                    if reaction.emoji in emoji_alphabet and emoji_alphabet.index(reaction.emoji) < len(submitted):
+                        vote[reaction.emoji] = 0
+                        async for user in reaction.users():
+                            if user != bot.user and user in usrlib:
+                                if usrlib[user] >= 5:
+                                    vote[reaction.emoji] += 1
+                await ctx.author.send(vote)
         elif command == "reboot":
             await ctx.send("Rebooting...")
             await bot.close()
