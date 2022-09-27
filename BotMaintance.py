@@ -49,7 +49,7 @@ async def override(ctx, command: str = commands.parameter(default=None,descripti
                     else:
                         usrlib[message.author] += 1
                 for reaction in votemsg.reactions:
-                    if reaction.emoji in emoji_alphabet and emoji_alphabet.index(reaction.emoji) < len(submitted):
+                    if reaction.emoji in emoji_alphabet:
                         vote[reaction.emoji] = 0
                         async for user in reaction.users():
                             if user != bot.user and user in usrlib:
