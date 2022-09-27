@@ -45,7 +45,7 @@ async def override(ctx, command: str = commands.parameter(default=None,descripti
                     usrlib[message.author] = 1
                 else:
                     usrlib[message.author] += 1
-                await ctx.author.send(usrlib)
+            await ctx.author.send(usrlib)
         elif command == "reboot":
             await ctx.send("Rebooting...")
             await bot.close()
