@@ -4,9 +4,8 @@ import logging
 import json
 import datetime
 import re
-import git
-import pathlib
-from random import shuffle
+import os
+import asyncio
 
 with open('secret.json') as f:
     secret = json.load(f)
@@ -14,7 +13,6 @@ with open('secret.json') as f:
 intents = discord.Intents.default()
 intents.message_content = True
 intents.messages = True
-g = git.cmd.Git(pathlib.Path(__file__).parent.resolve())
 bot = commands.Bot(command_prefix='>', intents=intents)
 handler = logging.FileHandler(filename='discord.log', encoding='utf-8', mode='w')
 emoji_alphabet = ["\U0001F1E6","\U0001F1E7","\U0001F1E8","\U0001F1E9","\U0001F1EA","\U0001F1EB","\U0001F1EC","\U0001F1ED","\U0001F1EE","\U0001F1EF","\U0001F1F0","\U0001F1F1","\U0001F1F2","\U0001F1F3","\U0001F1F4","\U0001F1F5","\U0001F1F6","\U0001F1F7","\U0001F1F8","\U0001F1F9","\U0001F1FA","\U0001F1FB","\U0001F1FC","\U0001F1FD","\U0001F1FE","\U0001F1FF"]
@@ -71,8 +69,13 @@ async def override(ctx, command: str = commands.parameter(default=None,descripti
             await ctx.send("Rebooting...")
             await bot.close()
         elif command == "pull":
-            g.pull()
+            pull = await asyncio.create_subprocess_shell("git pull", stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE,cwd=os.getcwd())
+            sto, str = await pull.communicate()
             await ctx.send("Pulled.")
+            if sto:
+                await ctx.author.send(f'[stdout]\n{sto.decode()}')
+            if str:
+                await ctx.author.send(f'[stderr]\n{str.decode()}')
             await ctx.send("Rebooting...")
             await bot.close()
         elif command == "prod":
