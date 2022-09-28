@@ -84,5 +84,9 @@ async def override(ctx, command: str = commands.parameter(default=None,descripti
             await bot.close()
     else:
         await ctx.send("No permissions")
+        
+def start():
+    bot.run(secret['token'], log_handler=handler, log_level=logging.DEBUG)
 
-bot.run(secret['token'], log_handler=handler, log_level=logging.DEBUG)
+if __name__ == '__main__':
+    start()

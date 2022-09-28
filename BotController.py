@@ -6,8 +6,9 @@ with open('config.json') as f:
 
 if __name__ == '__main__':
     if config["mode"] == "debug":
-        subprocess.call(["python3", "BotMaintance.py"])
+        import BotMaintance as Botlib
     elif config["mode"] == "prod":
-        subprocess.call(["python3", "Bot.py"])
+        import BotGeneral as Botlib
     else:
         raise Exception("Invalid mode in config.json")
+    Botlib.start()

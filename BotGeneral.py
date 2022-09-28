@@ -202,4 +202,8 @@ async def setmention(ctx, mention: discord.Role = commands.parameter(default=Non
         c.truncate()
     await ctx.send(f"Role {mention} has been set to be mentioned.")
 
-bot.run(secret['token'], log_handler=handler)
+def start():
+    bot.run(secret['token'], log_handler=handler)
+
+if __name__ == '__main__':
+    start()
