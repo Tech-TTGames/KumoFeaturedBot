@@ -1,7 +1,5 @@
 import discord
 import discord.ext.commands as commands
-import discord.ext.tasks as tasks
-import asyncio
 import logging
 import json
 import datetime
@@ -57,12 +55,14 @@ async def override(ctx, command: str = commands.parameter(default=None,descripti
                                     vote[reaction.emoji] += 1
                 await ctx.author.send(vote)
         elif command == "testget":
+                submitted = []
+                submitees = []
                 await ctx.send(f"Gathering submissions...",delete_after=10)
                 async with ctx.typing():
                     async for message in ctx.history(after=datetime.datetime.utcnow() - datetime.timedelta(days=31),limit=None):
                         if message.content.startswith('https://') and not message.author in submitees:
                             url = str(re.search(r"(?P<url>https?://[^\s]+)", message.content).group("url"))
-                            if not url in submitted_old and not url in submitted:
+                            if not url in submitted:
                                 submitted.append(url)
                                 submitees.append(message.author)
                 submitted = list(dict.fromkeys(submitted))
@@ -74,6 +74,13 @@ async def override(ctx, command: str = commands.parameter(default=None,descripti
             g.pull()
             await ctx.send("Pulled.")
             await ctx.send("Rebooting...")
+            await bot.close()
+        elif command == "prod":
+            with open('config.json', 'r+') as c:
+                config['mode'] = "prod"
+                json.dump(config, c, indent=4)
+                c.truncate()
+            await ctx.send("Debug mode enabling...")
             await bot.close()
     else:
         await ctx.send("No permissions")

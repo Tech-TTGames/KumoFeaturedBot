@@ -1,6 +1,5 @@
 import discord
 import discord.ext.commands as commands
-import discord.ext.tasks as tasks
 import asyncio
 import logging
 import json
@@ -157,7 +156,6 @@ async def override(ctx, command: str = commands.parameter(default=None,descripti
             await ctx.send(f"Role {arg} has been set as to have access.")
         elif command == "setmention":
             arg = ctx.guild.get_role(arg)
-            role = arg.id  # type: ignore
             with open('config.json', 'r+') as c:
                 config['mention'] = arg
                 json.dump(config, c, indent=4)
@@ -170,6 +168,13 @@ async def override(ctx, command: str = commands.parameter(default=None,descripti
             g.pull()
             await ctx.send("Pulled.")
             await ctx.send("Rebooting...")
+            await bot.close()
+        elif command == "debug":
+            with open('config.json', 'r+') as c:
+                config['mode'] = "debug"
+                json.dump(config, c, indent=4)
+                c.truncate()
+            await ctx.send("Debug mode enabling...")
             await bot.close()
         elif command == "close":
             await endvote(ctx)
