@@ -56,6 +56,17 @@ async def override(ctx, command: str = commands.parameter(default=None,descripti
                                 if usrlib[user] >= 5:
                                     vote[reaction.emoji] += 1
                 await ctx.author.send(vote)
+        elif command == "testget":
+                await ctx.send(f"Gathering submissions...",delete_after=10)
+                async with ctx.typing():
+                    async for message in ctx.history(after=datetime.datetime.utcnow() - datetime.timedelta(days=31),limit=None):
+                        if message.content.startswith('https://') and not message.author in submitees:
+                            url = str(re.search(r"(?P<url>https?://[^\s]+)", message.content).group("url"))
+                            if not url in submitted_old and not url in submitted:
+                                submitted.append(url)
+                                submitees.append(message.author)
+                submitted = list(dict.fromkeys(submitted))
+                await ctx.author.send(submitted)
         elif command == "reboot":
             await ctx.send("Rebooting...")
             await bot.close()
