@@ -80,7 +80,7 @@ async def override(ctx, command: str = commands.parameter(default=None,descripti
                 config['mode'] = "prod"
                 json.dump(config, c, indent=4)
                 c.truncate()
-            await ctx.send("Debug mode enabling...")
+            await ctx.send("Switching to normal mode...")
             await bot.close()
     else:
         await ctx.send("No permissions")
