@@ -20,7 +20,11 @@ intents = discord.Intents.default()
 intents.message_content = True # pylint: disable=assigning-non-slot
 intents.messages = True # pylint: disable=assigning-non-slot
 bot = commands.Bot(command_prefix='>', intents=intents)
-handler = RotatingFileHandler(filename='discord.log', encoding='utf-8', mode='w',backupCount=10,maxBytes=100000)
+handler = RotatingFileHandler(filename='discord.log',
+                            encoding='utf-8',
+                            mode='w',
+                            backupCount=10,
+                            maxBytes=100000)
 emoji_alphabet = ["\U0001F1E6","\U0001F1E7","\U0001F1E8","\U0001F1E9","\U0001F1EA","\U0001F1EB",
                 "\U0001F1EC","\U0001F1ED","\U0001F1EE","\U0001F1EF","\U0001F1F0","\U0001F1F1",
                 "\U0001F1F2","\U0001F1F3","\U0001F1F4","\U0001F1F5","\U0001F1F6","\U0001F1F7",
@@ -34,14 +38,16 @@ async def on_ready():
     """This event is called when the bot is ready to be used."""
     logging.info("%i has connected to Discord!", bot.user)
 
-@bot.command(brief="Pings the bot.",description="Pings the bot. What do you expect.")
+@bot.command(brief="Pings the bot.",
+            description="Pings the bot. What do you expect.")
 async def ping(ctx):
     """This command is used to check if the bot is online."""
     await ctx.send("Pong! The bot is online.\nPing: " + str(round(bot.latency * 1000)) + "ms")
     await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching,
                             name="for voter fraud."))
 
-@bot.command(brief="Displays the current version",description="Displays the current version of the bot.")
+@bot.command(brief="Displays the current version",
+            description="Displays the current version of the bot.")
 async def version(ctx):
     """This command is used to check the current version of the bot."""
     await ctx.send("Current version: " + current_ver())
