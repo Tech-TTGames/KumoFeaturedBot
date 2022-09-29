@@ -43,8 +43,9 @@ async def ping(ctx):
     await ctx.send("Pong! The bot is online.\nPing: " +
                 str(round(bot.latency * 1000)) +
                 "ms\nWarning! This bot is currently in debug mode.")
-    await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.playing,
-                                                        name="with fire. [DEBUG MODE]"))
+    await bot.change_presence(status=discord.Status.dnd,
+                            activity=discord.Activity(type=discord.ActivityType.playing,
+                            name="with fire. [DEBUG MODE]"))
 
 @bot.command(brief="Displays the current version",
             description="Displays the current version of the bot.")

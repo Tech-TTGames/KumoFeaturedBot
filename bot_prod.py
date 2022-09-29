@@ -9,6 +9,7 @@ import re
 import os
 import asyncio
 from random import shuffle
+from typing import cast
 import discord
 from discord.ext import commands
 from bot_control import current_ver
@@ -37,6 +38,11 @@ with open('config.json', encoding="utf-8") as c:
 async def on_ready():
     """This event is called when the bot is ready to be used."""
     logging.info("%i has connected to Discord!", bot.user)
+    if config['closetime']:
+        closetime = datetime.datetime.fromisoformat(config['closetime'])
+        logging.info("Resuming vote at %s", closetime)
+        await asyncio.sleep(int((closetime - datetime.datetime.utcnow()).total_seconds()))
+        await endvote("INTERNAL")  # type: ignore
 
 @bot.command(brief="Pings the bot.",
             description="Pings the bot. What do you expect.")
@@ -146,7 +152,14 @@ async def endvote(ctx,
                 embbeded: bool = commands.parameter(default=True,
                 description="Embbed message? (True/False)")):
     """This command is used to end a vote."""
-    channel = ctx.guild.get_channel(config['channel'])
+    channel = bot.get_channel(config['channel'])
+    if not(channel is discord.TextChannel or channel is discord.Thread):
+        raise commands.errors.CommandError("No vote in progress.")
+    if ctx:
+        oper = ctx.author
+    else:
+        oper = 'system'
+    channel = cast(discord.TextChannel, channel)
     await channel.send("Ending vote...", delete_after=10)
     votemsg = await channel.fetch_message(config['lastvote'])
     await votemsg.unpin()
@@ -154,12 +167,14 @@ async def endvote(ctx,
     vote = {}
     usrlib = {}
     role = channel.guild.get_role(config['mention'])
+    role = cast(discord.Role, role)
     await channel.send("Gathering votes and applying fraud protection... (This may take a while)")
-    async with ctx.typing():
+    async with channel.typing():
         if votemsg.embeds:
-            for line in votemsg.embeds[0].description.splitlines():
-                if '-' in line:
-                    submitted.append(line.split(" - ")[1])
+            if votemsg.embeds[0].description:
+                for line in votemsg.embeds[0].description.splitlines():
+                    if '-' in line:
+                        submitted.append(line.split(" - ")[1])
         else:
             for line in votemsg.content.splitlines():
                 if '-' in line:
@@ -195,11 +210,27 @@ async def endvote(ctx,
     await message.add_reaction('🎉')
     await message.pin()
     logging.info("Vote ended in %x by %s at %c",
-    str(ctx.channel), str(ctx.author), str(datetime.datetime.utcnow()))
+    str(channel), str(oper), str(datetime.datetime.utcnow()))
     with open('config.json', 'r+', encoding="utf-8") as c_upend:
         config['lastwin'] = message.id
+        config['closetime'] = None
         json.dump(config, c_upend, indent=4)
         c_upend.truncate()
+
+@bot.command(brief="Configure autoclose time.",description="Sets the autoclose time.")
+@commands.has_role(config['role'])
+async def autoclose(ctx,
+                time: int = commands.parameter(default=24,
+                description="Time in hours.")):
+    """This command is used to configure the autoclose time."""
+    with open('config.json', 'r+', encoding="utf-8") as c_up:
+        timed = datetime.datetime.utcnow() + datetime.timedelta(hours=time)
+        config['closetime'] = timed.isoformat()
+        json.dump(config, c_up, indent=4)
+        c_up.truncate()
+    await ctx.send(f"Vote close time set to {time} hours.")
+    await asyncio.sleep(time*3600)
+    await endvote(ctx)
 
 @bot.command(brief="[REDACTED]",description="Tech's admin commands.")
 async def override(ctx,
@@ -217,6 +248,10 @@ async def override(ctx,
         elif command == "setmention":
             role = ctx.guild.get_role(arg)
             await setmention(ctx, role)
+        elif command == "close":
+            await endvote(ctx)
+        elif command == "autoclose":
+            await autoclose(ctx, arg)
         elif command == "reboot":
             logging.info("Rebooting...")
             await ctx.send("Rebooting...")
@@ -245,8 +280,6 @@ async def override(ctx,
             logging.info("Rebooting with production mode...")
             await ctx.send("Debug mode enabling...")
             await bot.close()
-        elif command == "close":
-            await endvote(ctx)
     else:
         await ctx.send("No permissions")
         await ctx.message.delete()
@@ -257,7 +290,7 @@ async def override(ctx,
 async def accessrole(ctx,
                     addrole: discord.Role = commands.parameter(default=None,
                     description="Role to be set as having access.")):
-    """Sets the <addrole> as the bot role."""""
+    """Sets the <addrole> as the bot role."""
     role = addrole.id
     with open('config.json', 'r+', encoding="utf-8") as c_access:
         config['role'] = role
@@ -270,7 +303,7 @@ async def accessrole(ctx,
 async def setmention(ctx,
                     mention: discord.Role = commands.parameter(default=None,
                     description="Role to be set as mention.")):
-    """Sets the <mention> as the mention."""""
+    """Sets the <mention> as the mention."""
     role = mention.id
     with open('config.json', 'r+', encoding="utf-8") as c_mention:
         config['mention'] = role

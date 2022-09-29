@@ -6,7 +6,7 @@ with open('config.json',encoding="utf-8") as f:
 
 def current_ver():
     """Returns the current version of the bot. [major].[minor].[release].[build]"""
-    return "1.0.1.0a"
+    return "1.0.1.1"
 
 if __name__ == '__main__':
     if config["mode"] == "debug":
