@@ -12,7 +12,7 @@ from random import shuffle
 from typing import cast
 import discord
 from discord.ext import commands
-from bot_control import current_ver
+from ver import current_version
 
 with open('secret.json', encoding="utf-8") as f:
     secret = json.load(f)
@@ -26,7 +26,7 @@ handler = RotatingFileHandler(filename='discord.log',
                             mode='w',
                             backupCount=10,
                             maxBytes=100000)
-emoji_alphabet = ["\U0001F1E6","\U0001F1E7","\U0001F1E8","\U0001F1E9","\U0001F1EA","\U0001F1EB",
+EMOJI_ALPHABET = ["\U0001F1E6","\U0001F1E7","\U0001F1E8","\U0001F1E9","\U0001F1EA","\U0001F1EB",
                 "\U0001F1EC","\U0001F1ED","\U0001F1EE","\U0001F1EF","\U0001F1F0","\U0001F1F1",
                 "\U0001F1F2","\U0001F1F3","\U0001F1F4","\U0001F1F5","\U0001F1F6","\U0001F1F7",
                 "\U0001F1F8","\U0001F1F9","\U0001F1FA","\U0001F1FB","\U0001F1FC","\U0001F1FD",
@@ -56,7 +56,7 @@ async def ping(ctx):
             description="Displays the current version of the bot.")
 async def version(ctx):
     """This command is used to check the current version of the bot."""
-    await ctx.send("Current version: " + current_ver())
+    await ctx.send("Current version: " + current_version())
 
 @bot.command(brief="Gathers submissions and starts vote.",
             description="""Gathers all submissions in channel.
@@ -108,9 +108,9 @@ async def startvote(ctx,
     vote_text = ""
     shuffle(submitted)
     for i, sub in enumerate(submitted):
-        vote_text += f"{emoji_alphabet[i]} - {sub}\n"
+        vote_text += f"{EMOJI_ALPHABET[i]} - {sub}\n"
         if presend:
-            await cha.send(f"{emoji_alphabet[i]} {sub}")
+            await cha.send(f"{EMOJI_ALPHABET[i]} {sub}")
     vote_text += "\nVote by reacting to the corresponding letter."
     if embbeded:
         embed = discord.Embed(title="Vote", description=vote_text, color=0x00ff00)
@@ -118,7 +118,7 @@ async def startvote(ctx,
     else:
         message = await cha.send(f"{role.mention}\n{vote_text}")
     for i in range(len(submitted)):
-        await message.add_reaction(emoji_alphabet[i])
+        await message.add_reaction(EMOJI_ALPHABET[i])
         await message.pin()
     await ctx.send(f"Vote has been posted in {cha.mention}.")
     if clear:
@@ -188,8 +188,8 @@ async def endvote(ctx,
         logging.debug("Submitted: %s", str(submitted))
         logging.debug("Users: %s", str(usrlib))
         for reaction in votemsg.reactions:
-            if reaction.emoji in emoji_alphabet and \
-                emoji_alphabet.index(reaction.emoji) < len(submitted):
+            if reaction.emoji in EMOJI_ALPHABET and \
+                EMOJI_ALPHABET.index(reaction.emoji) < len(submitted):
                 vote[reaction.emoji] = 0
                 async for user in reaction.users():
                     if user != bot.user and user in usrlib:
@@ -198,14 +198,14 @@ async def endvote(ctx,
         logging.debug("Votes: %s", str(vote))
     msg_text = "This week's featured results are:\n"
     for i in range(len(vote)):
-        msg_text += f"{emoji_alphabet[i]} - {vote[emoji_alphabet[i]]} votes\n"
+        msg_text += f"{EMOJI_ALPHABET[i]} - {vote[EMOJI_ALPHABET[i]]} votes\n"
     if embbeded:
         embed = discord.Embed(title="RESULTS", description=msg_text, color=0x00ff00)
         await channel.send(embed=embed)
     else:
         await channel.send(f"{msg_text}")
     message = await channel.send(f"{role.mention} This week's featured results are in!\n"
-    f"The winner is {submitted[emoji_alphabet.index(max(vote, key=vote.get))]}" # type: ignore
+    f"The winner is {submitted[EMOJI_ALPHABET.index(max(vote, key=vote.get))]}" # type: ignore
     f" with {vote[max(vote, key=vote.get)]} votes!""")  # type: ignore
     await message.add_reaction('🎉')
     await message.pin()

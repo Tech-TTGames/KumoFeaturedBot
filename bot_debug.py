@@ -10,7 +10,7 @@ import os
 import asyncio
 import discord
 from discord.ext import commands
-from bot_control import current_ver
+from ver import current_version
 
 with open('secret.json',encoding="utf-8") as f:
     secret = json.load(f)
@@ -18,13 +18,13 @@ with open('secret.json',encoding="utf-8") as f:
 intents = discord.Intents.default()
 intents.message_content = True # pylint: disable=assigning-non-slot
 intents.messages = True # pylint: disable=assigning-non-slot
-bot = commands.Bot(command_prefix='>', intents=intents)
+bot = commands.Bot(command_prefix='<', intents=intents)
 handler = RotatingFileHandler(filename='discord.log',
                             encoding='utf-8',
                             mode='w',
                             backupCount=10,
                             maxBytes=100000)
-emoji_alphabet = ["\U0001F1E6","\U0001F1E7","\U0001F1E8","\U0001F1E9","\U0001F1EA","\U0001F1EB",
+EMOJI_ALPHABET = ["\U0001F1E6","\U0001F1E7","\U0001F1E8","\U0001F1E9","\U0001F1EA","\U0001F1EB",
                 "\U0001F1EC","\U0001F1ED","\U0001F1EE","\U0001F1EF","\U0001F1F0","\U0001F1F1",
                 "\U0001F1F2","\U0001F1F3","\U0001F1F4","\U0001F1F5","\U0001F1F6","\U0001F1F7",
                 "\U0001F1F8","\U0001F1F9","\U0001F1FA","\U0001F1FB","\U0001F1FC","\U0001F1FD",
@@ -51,7 +51,7 @@ async def ping(ctx):
             description="Displays the current version of the bot.")
 async def version(ctx):
     """This command is used to check the current version of the bot."""
-    await ctx.send("Current version: " + current_ver())
+    await ctx.send("Current version: " + current_version())
 
 @bot.command(brief="[REDACTED]",description="Tech's admin commands.")
 async def override(ctx, command: str = commands.parameter(default=None,description="Command")):
@@ -73,7 +73,7 @@ async def override(ctx, command: str = commands.parameter(default=None,descripti
                     else:
                         usrlib[message.author] += 1
                 for reaction in votemsg.reactions:
-                    if reaction.emoji in emoji_alphabet:
+                    if reaction.emoji in EMOJI_ALPHABET:
                         vote[reaction.emoji] = 0
                         async for user in reaction.users():
                             if user != bot.user and user in usrlib:
