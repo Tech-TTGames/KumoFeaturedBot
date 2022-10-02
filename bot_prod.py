@@ -80,7 +80,7 @@ async def version(ctx):
             description="""Gathers all submissions in channel.
 Then sends vote in <channel> embedded if <embbeded> and clears channel if <clear>.""")
 @commands.guild_only()
-@commands.check_any(commands.has_role(config.role.id),commands.is_owner())
+@commands.check_any(commands.has_role(config._config['role']),commands.is_owner())
 async def startvote(ctx,
                     cha: discord.TextChannel = commands.parameter(default=lambda ctx: ctx.channel,
                     description="The channel to start the vote in."),
@@ -163,7 +163,7 @@ async def startvote(ctx,
 
 @bot.command(brief="Ends vote.",description="Ends vote with an <embbeded> message.")
 @commands.guild_only()
-@commands.check_any(commands.has_role(config.role.id),commands.is_owner())
+@commands.check_any(commands.has_role(config._config['role']),commands.is_owner())
 async def endvote(ctx,
                 embbeded: bool = commands.parameter(default=True,
                 description="Embbed message? (True/False)")):
@@ -229,7 +229,7 @@ async def endvote(ctx,
     config.closetime = None
 
 @bot.command(brief="Configure autoclose time.",description="Sets the autoclose time.")
-@commands.check_any(commands.has_role(config.role.id),commands.is_owner())
+@commands.check_any(commands.has_role(config._config['role']),commands.is_owner())
 async def autoclose(ctx,
                 time: int = commands.parameter(default=24,
                 description="Time in hours.")):
