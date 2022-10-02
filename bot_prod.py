@@ -156,7 +156,7 @@ async def startvote(ctx,
     config.lastvote = message
     config.channel = cha
     if polltime:
-        timed = discord.utils.utcnow() + datetime.timedelta(hours=time)
+        timed = discord.utils.utcnow() + datetime.timedelta(hours=polltime)
         config.closetime = timed
         await cha.send(f"Vote will close in {polltime} hours.")
         await discord.utils.sleep_until(discord.utils.utcnow() + datetime.timedelta(hours=polltime))
