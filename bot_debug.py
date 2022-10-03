@@ -102,6 +102,8 @@ async def override(ctx, command: str = commands.parameter(default=None,descripti
         logging.info("Rebooting with production mode...")
         await ctx.send("Switching to normal mode...")
         await bot.close()
+    else:
+        await ctx.send("Invalid override command.")
 
 @bot.command(brief="Config editor",description="Tech's config editor.")
 @commands.is_owner()

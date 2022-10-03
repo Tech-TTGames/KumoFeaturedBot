@@ -274,6 +274,8 @@ async def override(ctx,
         logging.info("Rebooting with debug mode...")
         await ctx.send("Debug mode enabling...")
         await bot.close()
+    else:
+        await ctx.send("Invalid override command.")
 
 @bot.command(brief="Sets botrole.",descirption="Sets the <addrole> as the bot role.")
 @commands.check_any(commands.has_permissions(administrator=True),commands.is_owner())
