@@ -143,11 +143,10 @@ async def startvote(ctx,
         await ctx.send("Clearing channel...",delete_after=10)
         await ctx.channel.purge()
         await ctx.send("Channel has been cleared.",delete_after=10)
-        await ctx.send("Send suggestions here! "
-        "Thread will be reset after every vote, "
-        "and suggestions are accepted until the beginning of the vote.\n"
+        await ctx.send("Send suggestions here!\n"
+        "Suggestions are accepted until the beginning of the vote.\n"
         "One suggestion/user, please! "
-        "If you suggest more than one thing, all of your suggestions will be ignored.\n\n"
+        "If you suggest more than one thing, all of the following suggestions will be ignored.\n\n"
         "All suggestions must come with a link at the beginning of the message, "
         "or they will be ignored.\n\n"
         "This thread is not for conversation.")
