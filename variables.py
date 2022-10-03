@@ -8,7 +8,7 @@ from discord.ext import commands
 
 
 #[major].[minor].[release].[build]
-VERSION = "1.0.2.0b"
+VERSION = "1.0.2.0c"
 EMOJI_ALPHABET = ["\U0001F1E6","\U0001F1E7","\U0001F1E8","\U0001F1E9","\U0001F1EA","\U0001F1EB",
                 "\U0001F1EC","\U0001F1ED","\U0001F1EE","\U0001F1EF","\U0001F1F0","\U0001F1F1",
                 "\U0001F1F2","\U0001F1F3","\U0001F1F4","\U0001F1F5","\U0001F1F6","\U0001F1F7",
@@ -28,8 +28,8 @@ handler = RotatingFileHandler(filename='discord.log',
 class Secret:
     '''Class for secret.json management'''
     def __init__(self) -> None:
-        self.file = 'secret.json'
-        with open(self.file,encoding="utf-8",mode='r') as secret_f:
+        self._file = 'secret.json'
+        with open(self._file,encoding="utf-8",mode='r') as secret_f:
             self.secret = json.load(secret_f)
         self.token = self.secret['token']
 
@@ -42,17 +42,18 @@ class Secret:
 class Config:
     '''Class for convinient config access'''
     def __init__(self,bot: commands.Bot) -> None:
-        self.file = 'config.json'
-        with open(self.file,encoding="utf-8",mode='r') as config_f:
+        self._file = 'config.json'
+        with open(self._file,encoding="utf-8",mode='r') as config_f:
             self._config = json.load(config_f)
         self._bt = bot
+        self.role_id = self._config['role']
 
     def __dict__(self) -> dict:
         return self._config
 
     def update(self) -> None:
         '''Update the config.json file to reflect changes'''
-        with open(self.file,encoding="utf-8",mode='w') as config_f:
+        with open(self._file,encoding="utf-8",mode='w') as config_f:
             json.dump(self._config,config_f,indent=4)
             config_f.truncate()
 

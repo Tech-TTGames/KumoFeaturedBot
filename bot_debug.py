@@ -6,7 +6,6 @@ import datetime
 import re
 import os
 import asyncio
-from typing import Optional
 import discord
 from discord.ext import commands
 from variables import intents, handler, EMOJI_ALPHABET, VERSION, Config, Secret
@@ -109,7 +108,7 @@ async def override(ctx, command: str = commands.parameter(default=None,descripti
 async def edit_config(ctx,
                     setting: str = commands.parameter(default=None,
                     description="Setting to adjust"),
-                    value: Optional[int] = commands.parameter(default=None,
+                    value: int = commands.parameter(default=None,
                     description="Value to set to")):
     """Edits server-side config.json file."""
     if setting == "guild":
