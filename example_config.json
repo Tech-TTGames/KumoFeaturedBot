@@ -1,0 +1,21 @@
+{
+    "info":"This is the example config file for the bot. All the <name>_info are not used and just comments. The bot will use the info in the <name> field of the config.json. Feel free to remove all the _info values.",
+    "mode":"setup",
+    "mode_info":"The current mode of the bot can be 'prod', 'debug' or 'setup' for production, debugging and config creation.",
+    "guild": 999999999999999999,
+    "guild_info":"The discord guild - server - ID. If not present bot will default to first guild.",
+    "channel": 111111111111111111,
+    "channel_info":"The channel in the guild where the bot will look for messages (lastvote and lastwin).",
+    "role": 222222222222222222,
+    "role_info":"Role ID of the role with bot access. Role ID.",
+    "mention": 333333333333333333,
+    "mention_info":"Role ID of the role to mention when a new vote is found. Role ID or null.",
+    "lastvote": 4444444444444444444,
+    "lastvote_info":"ID of message of Last Vote. ID or null",
+    "lastwin": 5555555555555555555,
+    "lastwin_info":"ID of message of Last Win. ID or null",
+    "closetime": 1665135816,
+    "closetime_info":"Closeteime of the vote. unix timestamp or null",
+    "voterunning": false,
+    "voterunning_info":"Is a vote running? true or false"
+}

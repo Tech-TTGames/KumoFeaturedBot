@@ -10,9 +10,19 @@ import asyncio
 import discord
 from discord.ext import commands
 from variables import intents, handler, EMOJI_ALPHABET, VERSION, Config, Secret
+
 bot = commands.Bot(command_prefix='>', intents=intents)
 config = Config(bot)
 secret = Secret()
+bot.command_prefix = config.prefix
+
+def vote_running():
+    '''Returns wether a vote is running.'''
+    async def predicate(ctx):
+        if not config.vote_running or ctx.author == bot.user:
+            raise commands.CommandError("No vote is currently running.")
+        return True
+    return commands.check(predicate)
 
 @bot.event
 async def on_command_error(ctx, error):
@@ -38,7 +48,7 @@ async def on_command_error(ctx, error):
     elif isinstance(error,commands.NotOwner):
         await ctx.send(f"{ctx.author.name} is not in the sudoers file."
         " This incident will be reported.")
-        logging.warning("Unauthorized override attempt: %i", ctx.author.id)
+        logging.warning("Unauthorized override attempt: %s", ctx.author.id)
 
     elif isinstance(error,(commands.CheckFailure,commands.CheckAnyFailure)):
         await ctx.send("You are missing permissions to run this command.")
@@ -56,7 +66,7 @@ async def on_command_error(ctx, error):
 @bot.event
 async def on_ready():
     """This event is called when the bot is ready to be used."""
-    logging.info("%i has connected to Discord!", bot.user)
+    logging.info("%s has connected to Discord!", str(bot.user))
     if config.closetime:
         logging.info("Resuming vote at %s", config.closetime)
         await discord.utils.sleep_until(config.closetime)
@@ -94,20 +104,23 @@ async def startvote(ctx,
                     description="Send message links before vote? (True/False)")):
     """This command is used to start a vote."""
     winmsg = await config.lastwin
-    await winmsg.unpin()
+    if winmsg is not None:
+        await winmsg.unpin()
     votemsg = await config.lastvote
-    await votemsg.unpin()
+    if votemsg is not None:
+        await votemsg.unpin()
     submitted = []
     submitted_old = []
     submitees = []
-    if votemsg.embeds[0].description:
-        for line in votemsg.embeds[0].description.splitlines():
-            if '-' in line:
-                submitted_old.append(line.split(" - ")[1])
-    else:
-        for line in votemsg.content.splitlines():
-            if '-' in line:
-                submitted_old.append(line.split(" - ")[1])
+    if votemsg is not None:
+        if votemsg.embeds[0].description:
+            for line in votemsg.embeds[0].description.splitlines():
+                if '-' in line:
+                    submitted_old.append(line.split(" - ")[1])
+        else:
+            for line in votemsg.content.splitlines():
+                if '-' in line:
+                    submitted_old.append(line.split(" - ")[1])
     role = config.mention
     await ctx.send("Gathering submissions...",delete_after=10)
     async with ctx.typing():
@@ -115,10 +128,10 @@ async def startvote(ctx,
         async for message in ctx.history(after=timed,limit=None):
             if message.content.startswith('https://') and not message.author in submitees:
                 url = re.search(r"(?P<url>https?://[^\s]+)", message.content)
-                if url not in submitted and url is not None:
+                if url not in submitted and url is not None and url not in submitted_old:
                     submitted.append(str(url.group("url")))
                     submitees.append(message.author)
-    logging.debug("Old: %o", str(submitted_old))
+    logging.debug("Old: %s", str(submitted_old))
     logging.debug("New: %s", str(submitted))
     submitted = list(dict.fromkeys(submitted))
     await ctx.send(f"Found {len(submitted)} valid submission(s).\nPrepearing Vote...",
@@ -130,6 +143,8 @@ async def startvote(ctx,
         if presend:
             await cha.send(f"{EMOJI_ALPHABET[i]} {sub}")
     vote_text += "\nVote by reacting to the corresponding letter."
+    if polltime:
+        vote_text += f"\nVote will close <t:{str(config.closetime_timestamp)}:R>."
     if embbeded:
         embed = discord.Embed(title="Vote", description=vote_text, color=0x00ff00)
         message = await cha.send(f"{role.mention}",embed=embed)
@@ -150,14 +165,15 @@ async def startvote(ctx,
         "All suggestions must come with a link at the beginning of the message, "
         "or they will be ignored.\n\n"
         "This thread is not for conversation.")
-    logging.info("Vote started in %x by %s at %c",
+    logging.info("Vote started in %s by %s at %s",
     str(cha), str(ctx.author), str(discord.utils.utcnow()))
     config.lastvote = message
     config.channel = cha
+    config.vote_running = True
     if polltime:
         timed = discord.utils.utcnow() + datetime.timedelta(hours=polltime)
         config.closetime = timed
-        await cha.send(f"Vote will close in {polltime} hours.")
+        await cha.send(f"Vote will close <t:{str(config.closetime_timestamp)}:R>.")
         await discord.utils.sleep_until(discord.utils.utcnow() + datetime.timedelta(hours=polltime))
         await endvote(ctx,embbeded)
 
@@ -165,6 +181,7 @@ async def startvote(ctx,
 @bot.command(brief="Ends vote.",description="Ends vote with an <embbeded> message.")
 @commands.guild_only()
 @commands.check_any(commands.has_role(config.role_id),commands.is_owner())
+@vote_running()
 async def endvote(ctx,
                 embbeded: bool = commands.parameter(default=True,
                 description="Embbed message? (True/False)")):
@@ -178,6 +195,8 @@ async def endvote(ctx,
         oper = 'system'
     await channel.send("Ending vote...", delete_after=10)
     votemsg = await config.lastvote
+    if votemsg is None:
+        raise commands.errors.CommandError("Vote message not found.")
     await votemsg.unpin()
     submitted = []
     vote = {}
@@ -224,20 +243,22 @@ async def endvote(ctx,
     f" with {vote[max(vote, key=vote.get)]} votes!""")  # type: ignore
     await message.add_reaction('🎉')
     await message.pin()
-    logging.info("Vote ended in %x by %s at %c",
+    logging.info("Vote ended in %s by %s at %s",
     str(channel), str(oper), str(discord.utils.utcnow()))
     config.lastwin = message
+    config.vote_running = False
     config.closetime = None
 
 @bot.command(brief="Configure autoclose time.",description="Sets the autoclose time.")
 @commands.check_any(commands.has_role(config.role_id),commands.is_owner())
+@vote_running()
 async def autoclose(ctx,
                 time: int = commands.parameter(default=24,
                 description="Time in hours.")):
     """This command is used to configure the autoclose time."""
     timed = discord.utils.utcnow() + datetime.timedelta(hours=time)
     config.closetime = timed
-    await ctx.send(f"Vote close time set to {time} hours.")
+    await ctx.send(f"Vote will close <t:{str(config.closetime_timestamp)}:R>.")
     await discord.utils.sleep_until(timed)
     await endvote(ctx)
 
@@ -248,7 +269,7 @@ async def override(ctx,
     """This command is used to override the bot's commands."""
     await ctx.send("Atemptting override..")
     await ctx.send(f"Command: {command}")
-    logging.info("Owner override triggered: %i", command)
+    logging.info("Owner override triggered: %s", command)
     if command == "reboot":
         logging.info("Rebooting...")
         await ctx.send("Rebooting...")
@@ -262,10 +283,10 @@ async def override(ctx,
         await ctx.send("Pulled.")
         if stdo:
             await ctx.author.send(f'[stdout]\n{stdo.decode()}')
-            logging.info('[stdout]\n%i', stdo.decode())
+            logging.info('[stdout]\n%s', stdo.decode())
         if stdr:
             await ctx.author.send(f'[stderr]\n{stdr.decode()}')
-            logging.info('[stderr]\n%i', stdr.decode())
+            logging.info('[stderr]\n%s', stdr.decode())
         await ctx.send("Rebooting...")
         logging.info("Rebooting...")
         await bot.close()
@@ -297,7 +318,7 @@ async def setmention(ctx,
 
 def start():
     """Starts the bot."""
-    bot.run(secret.token, log_handler=handler)
+    bot.run(secret.token, log_handler=handler, root_logger=True)
 
 if __name__ == '__main__':
     start()
