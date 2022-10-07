@@ -17,7 +17,7 @@ secret = Secret()
 @bot.event
 async def on_ready():
     """This event is called when the bot is ready to be used."""
-    logging.info("%i has connected to Discord!", bot.user)
+    logging.info("%s has connected to Discord!", str(bot.user))
 
 @bot.command(brief="Pings the bot.",description="Pings the bot. What do you expect.")
 async def ping(ctx):
@@ -40,7 +40,7 @@ async def version(ctx):
 async def override(ctx, command: str = commands.parameter(default=None,description="Command")):
     """Various commands for testing."""
     await ctx.send("Atemptting override..")
-    logging.info("Owner override triggered: %i", command)
+    logging.info("Owner override triggered: %s", command)
     if command == "testhist":
         async with ctx.typing():
             usrlib = {}
@@ -53,15 +53,18 @@ async def override(ctx, command: str = commands.parameter(default=None,descripti
                     usrlib[message.author] = 1
                 else:
                     usrlib[message.author] += 1
-            for reaction in votemsg.reactions:
-                if reaction.emoji in EMOJI_ALPHABET:
-                    vote[reaction.emoji] = 0
-                    async for user in reaction.users():
-                        if user != bot.user and user in usrlib:
-                            if usrlib[user] >= 5:
-                                vote[reaction.emoji] += 1
+            if votemsg:
+                for reaction in votemsg.reactions:
+                    if reaction.emoji in EMOJI_ALPHABET:
+                        vote[reaction.emoji] = 0
+                        async for user in reaction.users():
+                            if user != bot.user and user in usrlib:
+                                if usrlib[user] >= 5:
+                                    vote[reaction.emoji] += 1
+            else:
+                vote = "No vote message found."
             await ctx.author.send(vote)
-            logging.debug("Test History results %a", vote)
+            logging.debug("Test History results %s", vote)
     elif command == "testget":
         submitted = []
         submitees = []
@@ -90,10 +93,10 @@ async def override(ctx, command: str = commands.parameter(default=None,descripti
         await ctx.send("Pulled.")
         if stdo:
             await ctx.author.send(f'[stdout]\n{stdo.decode()}')
-            logging.info('[stdout]\n%i', stdo.decode())
+            logging.info('[stdout]\n%s', stdo.decode())
         if stdr:
             await ctx.author.send(f'[stderr]\n{stdr.decode()}')
-            logging.info('[stderr]\n%i', stdr.decode())
+            logging.info('[stderr]\n%s', stdr.decode())
         await ctx.send("Rebooting...")
         logging.info("Rebooting...")
         await bot.close()
@@ -135,7 +138,7 @@ async def edit_config(ctx,
 
 def start():
     """Starts the bot."""
-    bot.run(secret.token, log_handler=handler, log_level=logging.DEBUG)
+    bot.run(secret.token, log_handler=handler, log_level=logging.DEBUG, root_logger=True)
 
 if __name__ == '__main__':
     start()

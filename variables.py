@@ -1,7 +1,7 @@
 '''Declare variables that aren't changed between debug and production'''
 from logging.handlers import RotatingFileHandler
 from datetime import datetime
-from typing import Union
+from typing import Union, Optional
 import json
 import discord
 from discord.ext import commands
@@ -47,6 +47,7 @@ class Config:
             self._config = json.load(config_f)
         self._bt = bot
         self.role_id = self._config['role']
+        self.closetime_timestamp = self._config['closetime']
 
     def __dict__(self) -> dict:
         return self._config
@@ -68,6 +69,16 @@ class Config:
         self.update()
 
     @property
+    def prefix(self) -> str:
+        '''Gets current prefix'''
+        return self._config['prefix']
+
+    @prefix.setter
+    def prefix(self, prefix: str) -> None:
+        self._config['prefix'] = prefix
+        self.update()
+
+    @property
     def guild(self) -> discord.Guild:
         '''Gets guild from config'''
         tmp = self._bt.get_guild(self._config['guild'])
@@ -81,7 +92,7 @@ class Config:
         self.update()
 
     @property
-    def channel(self) -> Union[discord.TextChannel,discord.Thread]:
+    def channel(self) -> Union[discord.TextChannel, discord.Thread]:
         '''Gets channel from config'''
         tmp = self._bt.get_channel(self._config['channel'])
         if tmp is None:
@@ -91,7 +102,7 @@ class Config:
         return tmp  # type: ignore
 
     @channel.setter
-    def channel(self, channel: Union[discord.TextChannel,discord.Thread]) -> None:
+    def channel(self, channel: Union[discord.TextChannel, discord.Thread]) -> None:
         self._config['channel'] = channel.id
         self.update()
 
@@ -122,7 +133,7 @@ class Config:
         self.update()
 
     @property
-    async def lastvote(self) -> discord.Message:
+    async def lastvote(self) -> Optional[discord.Message]:
         '''Gets last vote's message from config'''
         tmp = await self.channel.fetch_message(self._config['lastvote'])
         if tmp is None:
@@ -135,8 +146,10 @@ class Config:
         self.update()
 
     @property
-    async def lastwin(self) -> discord.Message:
+    async def lastwin(self) -> Optional[discord.Message]:
         '''Gets last win's message from config'''
+        if self._config['lastwin'] is None:
+            return None
         tmp = await self.channel.fetch_message(self._config['lastwin'])
         if tmp is None:
             raise ValueError("Message not found")
@@ -148,16 +161,26 @@ class Config:
         self.update()
 
     @property
-    def closetime(self) -> Union[datetime,None]:
+    def closetime(self) -> Optional[datetime]:
         '''Gets time to close running vote on'''
         if self._config['closetime'] is None:
             return None
-        return datetime.fromisoformat(self._config['closetime'])
+        return datetime.fromtimestamp(self._config['closetime'])
 
     @closetime.setter
-    def closetime(self, time: Union[datetime,None]) -> None:
+    def closetime(self, time: Optional[datetime]) -> None:
         if time is None:
             self._config['closetime'] = None
         else:
-            self._config['closetime'] = time.isoformat()
+            self._config['closetime'] = time.timestamp()
+        self.update()
+
+    @property
+    def vote_running(self) -> bool:
+        '''Checks if a vote is running'''
+        return self._config['voterunning']
+
+    @vote_running.setter
+    def vote_running(self, running: bool) -> None:
+        self._config['voterunning'] = running
         self.update()
