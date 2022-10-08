@@ -24,7 +24,7 @@ async def ping(ctx):
     """This command is used to check if the bot is online."""
     await ctx.send("Pong! The bot is online.\nPing: " +
                 str(round(bot.latency * 1000)) +
-                "ms\nWarning! This bot is currently in debug mode.")
+                "ms\n*Warning! This bot is currently in debug mode.*")
     await bot.change_presence(status=discord.Status.dnd,
                             activity=discord.Activity(type=discord.ActivityType.playing,
                             name="with fire. [DEBUG MODE]"))
@@ -33,7 +33,8 @@ async def ping(ctx):
             description="Displays the current version of the bot.")
 async def version(ctx):
     """This command is used to check the current version of the bot."""
-    await ctx.send("Current version: " + VERSION)
+    await ctx.send("KumoFeaturedBot " + VERSION +  " by Tech. TTGames#8616 is running."
+                    "\n*Warning! This bot is currently in debug mode.*")
 
 @bot.command(brief="[REDACTED]",description="Tech's admin commands.")
 @commands.is_owner()

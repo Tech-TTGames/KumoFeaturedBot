@@ -84,7 +84,7 @@ async def ping(ctx):
             description="Displays the current version of the bot.")
 async def version(ctx):
     """This command is used to check the current version of the bot."""
-    await ctx.send("Current version: " + VERSION)
+    await ctx.send("KumoFeaturedBot " + VERSION +  " by Tech. TTGames#8616 is running.")
 
 @bot.command(brief="Gathers submissions and starts vote.",
             description="""Gathers all submissions in channel.
