@@ -1,6 +1,6 @@
 '''Declare variables that aren't changed between debug and production'''
 from logging.handlers import RotatingFileHandler
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Union, Optional
 import json
 import discord
@@ -8,7 +8,7 @@ from discord.ext import commands
 
 
 #v[major].[minor].[release].[build]
-VERSION = "v1.0.2.1a"
+VERSION = "v1.0.2.1b"
 EMOJI_ALPHABET = ["\U0001F1E6","\U0001F1E7","\U0001F1E8","\U0001F1E9","\U0001F1EA","\U0001F1EB",
                 "\U0001F1EC","\U0001F1ED","\U0001F1EE","\U0001F1EF","\U0001F1F0","\U0001F1F1",
                 "\U0001F1F2","\U0001F1F3","\U0001F1F4","\U0001F1F5","\U0001F1F6","\U0001F1F7",
@@ -97,9 +97,9 @@ class Config:
         tmp = self._bt.get_channel(self._config['channel'])
         if tmp is None:
             raise ValueError("Channel not found")
-        if tmp is discord.CategoryChannel:
-            raise ValueError("Channel is a category")
-        return tmp  # type: ignore
+        if isinstance(tmp, (discord.TextChannel, discord.Thread)):
+            return tmp
+        raise ValueError("Channel is not a text channel or thread")
 
     @channel.setter
     def channel(self, channel: Union[discord.TextChannel, discord.Thread]) -> None:
@@ -135,6 +135,8 @@ class Config:
     @property
     async def lastvote(self) -> Optional[discord.Message]:
         '''Gets last vote's message from config'''
+        if self._config['lastvote'] is None:
+            return None
         tmp = await self.channel.fetch_message(self._config['lastvote'])
         if tmp is None:
             raise ValueError("Message not found")
@@ -165,7 +167,7 @@ class Config:
         '''Gets time to close running vote on'''
         if self._config['closetime'] is None:
             return None
-        return datetime.fromtimestamp(self._config['closetime'])
+        return datetime.fromtimestamp(self._config['closetime'],tz=timezone.utc)
 
     @closetime.setter
     def closetime(self, time: Optional[datetime]) -> None:

@@ -80,6 +80,23 @@ async def setup(ctx):
             await dm_channel.send("That is not a valid Role ID."
             " Please try again or use 'cancel' to cancel the setup.")
 
+    await dm_channel.send("Please provide the ID of the role that will be mentioned during votes:")
+    while True: # Get role ID
+        rol = await bot.wait_for('message',check=dm_from_user)
+        if rol.content.isnumeric():
+            role = guild.get_role(int(rol.content))
+            if role is None:
+                await dm_channel.send("That is not a valid Role ID. Please try again.")
+            else:
+                confi["mention"] = role.id
+                await dm_channel.send(f"Role {role} has been set as the mention role.")
+                break
+        else:
+            if rol.content == 'cancel':
+                return await dm_channel.send("Setup cancelled.")
+            await dm_channel.send("That is not a valid Role ID."
+            " Please try again or use 'cancel' to cancel the setup.")
+
     await dm_channel.send("Preparing to save configuration...")
     confi["mention"] = None
     confi["lastvote"] = None

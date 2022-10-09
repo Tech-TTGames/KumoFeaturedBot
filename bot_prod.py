@@ -61,7 +61,8 @@ async def on_command_error(ctx, error):
         f"{error.missing_permissions}")
 
     else:
-        logging.error('Ignoring exception in command %s:',ctx.command,exc_info=True)
+        logging.exception('Ignoring exception %s in command %s:',
+                            str(error),ctx.command,exc_info=error)
 
 @bot.event
 async def on_ready():
@@ -70,6 +71,7 @@ async def on_ready():
     if config.closetime:
         logging.info("Resuming vote at %s", config.closetime)
         await discord.utils.sleep_until(config.closetime)
+        logging.info("Closing vote via INTERNAL event.")
         await endvote("INTERNAL")  # type: ignore
 
 @bot.command(brief="Pings the bot.",
@@ -96,7 +98,7 @@ async def startvote(ctx,
                     description="The channel to start the vote in."),
                     polltime: int = commands.parameter(default=0,
                     description="Time to close the vote after in hours."),
-                    clear: bool = commands.parameter(default=True,
+                    clear: bool = commands.parameter(default=False,
                     description="Clear channel after vote? (True/False)"),
                     embbeded: bool = commands.parameter(default=True,
                     description="Embbed message? (True/False)"),
@@ -139,12 +141,13 @@ async def startvote(ctx,
     vote_text = ""
     shuffle(submitted)
     for i, sub in enumerate(submitted):
-        vote_text += f"{EMOJI_ALPHABET[i]} - {sub}\n"
+        vote_text += f"{EMOJI_ALPHABET[i]} - <{sub}>\n"
         if presend:
             await cha.send(f"{EMOJI_ALPHABET[i]} {sub}")
     vote_text += "\nVote by reacting to the corresponding letter."
     if polltime:
-        vote_text += f"\nVote will close <t:{str(config.closetime_timestamp)}:R>."
+        timed = discord.utils.utcnow() + datetime.timedelta(hours=polltime)
+        vote_text += f"\nVote will close <t:{str(round(timed.timestamp()))}:R>."
     if embbeded:
         embed = discord.Embed(title="Vote", description=vote_text, color=0x00ff00)
         message = await cha.send(f"{role.mention}",embed=embed)
@@ -152,7 +155,15 @@ async def startvote(ctx,
         message = await cha.send(f"{role.mention}\n{vote_text}")
     for i in range(len(submitted)):
         await message.add_reaction(EMOJI_ALPHABET[i])
+    def check(msg):
+        return msg.type == discord.MessageType.pins_add and msg.reference.message_id == message.id
+    task = asyncio.create_task(bot.wait_for('raw_message_edit', check=check))
+    try:
         await message.pin()
+    except discord.HTTPException:
+        task.cancel()
+    pnned = await task
+    await pnned.delete()
     await ctx.send(f"Vote has been posted in {cha.mention}.")
     if clear:
         await ctx.send("Clearing channel...",delete_after=10)
@@ -171,10 +182,9 @@ async def startvote(ctx,
     config.channel = cha
     config.vote_running = True
     if polltime:
-        timed = discord.utils.utcnow() + datetime.timedelta(hours=polltime)
         config.closetime = timed
-        await cha.send(f"Vote will close <t:{str(config.closetime_timestamp)}:R>.")
-        await discord.utils.sleep_until(discord.utils.utcnow() + datetime.timedelta(hours=polltime))
+        await discord.utils.sleep_until(timed)
+        logging.info("Closing vote in %s due to polltime end.",str(cha))
         await endvote(ctx,embbeded)
 
 
@@ -187,8 +197,6 @@ async def endvote(ctx,
                 description="Embbed message? (True/False)")):
     """This command is used to end a vote."""
     channel = config.channel
-    if not(channel is discord.TextChannel or channel is discord.Thread):
-        raise commands.errors.CommandError("No vote in progress.")
     if ctx != 'INTERNAL':
         oper = ctx.author
     else:
@@ -232,17 +240,27 @@ async def endvote(ctx,
         logging.debug("Votes: %s", str(vote))
     msg_text = "This week's featured results are:\n"
     for i in range(len(vote)):
-        msg_text += f"{EMOJI_ALPHABET[i]} - {vote[EMOJI_ALPHABET[i]]} votes\n"
+        msg_text += f"{EMOJI_ALPHABET[i]} - {vote[EMOJI_ALPHABET[i]]} vote" + \
+        f"{'s'[:vote[EMOJI_ALPHABET[i]]^1]}\n"
     if embbeded:
         embed = discord.Embed(title="RESULTS", description=msg_text, color=0x00ff00)
         await channel.send(embed=embed)
     else:
         await channel.send(f"{msg_text}")
-    message = await channel.send(f"{role.mention} This week's featured results are in!\n"
-    f"The winner is {submitted[EMOJI_ALPHABET.index(max(vote, key=vote.get))]}" # type: ignore
-    f" with {vote[max(vote, key=vote.get)]} votes!""")  # type: ignore
+    win_id = max(vote, key= vote.get)  # type: ignore
+    message = await channel.send(f"{role.mention} This week's featured results are in!"
+    f"The winner is {submitted[EMOJI_ALPHABET.index(win_id)]}"
+    f" with {vote[win_id]} vote{'s'[:vote[win_id]^1]}!")
     await message.add_reaction('🎉')
-    await message.pin()
+    def check(msg):
+        return msg.type == discord.MessageType.pins_add and msg.reference.message_id == message.id
+    task = asyncio.create_task(bot.wait_for('raw_message_edit', check=check))
+    try:
+        await message.pin()
+    except discord.HTTPException:
+        task.cancel()
+    pnned = await task
+    await pnned.delete()
     logging.info("Vote ended in %s by %s at %s",
     str(channel), str(oper), str(discord.utils.utcnow()))
     config.lastwin = message
@@ -258,7 +276,7 @@ async def autoclose(ctx,
     """This command is used to configure the autoclose time."""
     timed = discord.utils.utcnow() + datetime.timedelta(hours=time)
     config.closetime = timed
-    await ctx.send(f"Vote will close <t:{str(config.closetime_timestamp)}:R>.")
+    await ctx.send(f"Vote will close <t:{str(round(config.closetime_timestamp))}:R>.")
     await discord.utils.sleep_until(timed)
     await endvote(ctx)
 
