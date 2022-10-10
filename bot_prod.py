@@ -90,7 +90,7 @@ async def version(ctx):
 
 @bot.command(brief="Gathers submissions and starts vote.",
             description="""Gathers all submissions in channel.
-Then sends vote in <channel> embedded if <embbeded> and clears channel if <clear>.""")
+Then sends vote in <channel> and clears channel if <clear>.""")
 @commands.guild_only()
 @commands.check_any(commands.has_role(config.role_id),commands.is_owner())
 async def startvote(ctx,
@@ -100,8 +100,6 @@ async def startvote(ctx,
                     description="Time to close the vote after in hours."),
                     clear: bool = commands.parameter(default=False,
                     description="Clear channel after vote? (True/False)"),
-                    embbeded: bool = commands.parameter(default=True,
-                    description="Embbed message? (True/False)"),
                     presend: bool = commands.parameter(default=False,
                     description="Send message links before vote? (True/False)")):
     """This command is used to start a vote."""
@@ -115,14 +113,14 @@ async def startvote(ctx,
     submitted_old = []
     submitees = []
     if votemsg is not None:
-        if votemsg.embeds[0].description:
+        if votemsg.embeds and votemsg.embeds[0].description and votemsg.embeds[0].title == "Vote":
             for line in votemsg.embeds[0].description.splitlines():
-                if '-' in line:
-                    submitted_old.append(line.split(" - ")[1])
+                if ' - ' in line:
+                    submitted.append(line.split(" - ")[1]).lstrip("<" ).rstrip(">")
         else:
             for line in votemsg.content.splitlines():
-                if '-' in line:
-                    submitted_old.append(line.split(" - ")[1])
+                if ' - ' in line:
+                    submitted.append(line.split(" - ")[1]).lstrip("<").rstrip(">")
     role = config.mention
     await ctx.send("Gathering submissions...",delete_after=10)
     async with ctx.typing():
@@ -148,11 +146,8 @@ async def startvote(ctx,
     if polltime:
         timed = discord.utils.utcnow() + datetime.timedelta(hours=polltime)
         vote_text += f"\nVote will close <t:{str(round(timed.timestamp()))}:R>."
-    if embbeded:
-        embed = discord.Embed(title="Vote", description=vote_text, color=0x00ff00)
-        message = await cha.send(f"{role.mention}",embed=embed)
-    else:
-        message = await cha.send(f"{role.mention}\n{vote_text}")
+    embed = discord.Embed(title="Vote", description=vote_text, color=0x00ff00)
+    message = await cha.send(f"{role.mention}",embed=embed)
     for i in range(len(submitted)):
         await message.add_reaction(EMOJI_ALPHABET[i])
     def check(msg):
@@ -185,16 +180,14 @@ async def startvote(ctx,
         config.closetime = timed
         await discord.utils.sleep_until(timed)
         logging.info("Closing vote in %s due to polltime end.",str(cha))
-        await endvote(ctx,embbeded)
+        await endvote(ctx)
 
 
-@bot.command(brief="Ends vote.",description="Ends vote with an <embbeded> message.")
+@bot.command(brief="Ends vote.",description="Ends vote with a embbeded message.")
 @commands.guild_only()
 @commands.check_any(commands.has_role(config.role_id),commands.is_owner())
 @vote_running()
-async def endvote(ctx,
-                embbeded: bool = commands.parameter(default=True,
-                description="Embbed message? (True/False)")):
+async def endvote(ctx):
     """This command is used to end a vote."""
     channel = config.channel
     if ctx != 'INTERNAL':
@@ -241,11 +234,8 @@ async def endvote(ctx,
     for i in range(len(vote)):
         msg_text += f"{EMOJI_ALPHABET[i]} - {vote[EMOJI_ALPHABET[i]]} vote" + \
         f"{'s'[:vote[EMOJI_ALPHABET[i]]^1]}\n"
-    if embbeded:
-        embed = discord.Embed(title="RESULTS", description=msg_text, color=0x00ff00)
-        await channel.send(embed=embed)
-    else:
-        await channel.send(f"{msg_text}")
+    embed = discord.Embed(title="RESULTS", description=msg_text, color=0x00ff00)
+    await channel.send(embed=embed)
     win_id = max(vote, key= vote.get)  # type: ignore
     message = await channel.send(f"{role.mention} This week's featured results are in!"
     f"The winner is {submitted[EMOJI_ALPHABET.index(win_id)]}"
