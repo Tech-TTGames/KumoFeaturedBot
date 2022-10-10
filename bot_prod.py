@@ -116,11 +116,11 @@ async def startvote(ctx,
         if votemsg.embeds and votemsg.embeds[0].description and votemsg.embeds[0].title == "Vote":
             for line in votemsg.embeds[0].description.splitlines():
                 if ' - ' in line:
-                    submitted.append(line.split(" - ")[1]).lstrip("<" ).rstrip(">")
+                    submitted.append(line.split(" - ")[1].lstrip("<" ).rstrip(">"))
         else:
             for line in votemsg.content.splitlines():
                 if ' - ' in line:
-                    submitted.append(line.split(" - ")[1]).lstrip("<").rstrip(">")
+                    submitted.append(line.split(" - ")[1].lstrip("<").rstrip(">"))
     role = config.mention
     await ctx.send("Gathering submissions...",delete_after=10)
     async with ctx.typing():
@@ -150,15 +150,7 @@ async def startvote(ctx,
     message = await cha.send(f"{role.mention}",embed=embed)
     for i in range(len(submitted)):
         await message.add_reaction(EMOJI_ALPHABET[i])
-    def check(msg):
-        return msg.type == discord.MessageType.pins_add and msg.reference.message_id == message.id
-    task = asyncio.create_task(bot.wait_for('raw_message_edit', check=check))
-    try:
-        await message.pin()
-    except discord.HTTPException:
-        task.cancel()
-    pnned = await task
-    await pnned.delete()
+    await message.pin()
     await ctx.send(f"Vote has been posted in {cha.mention}.")
     if clear:
         await ctx.send("Clearing channel...",delete_after=10)
@@ -208,11 +200,11 @@ async def endvote(ctx):
         if votemsg.embeds and votemsg.embeds[0].description and votemsg.embeds[0].title == "Vote":
             for line in votemsg.embeds[0].description.splitlines():
                 if ' - ' in line:
-                    submitted.append(line.split(" - ")[1]).lstrip("<" ).rstrip(">")
+                    submitted.append(line.split(" - ")[1].lstrip("<" ).rstrip(">"))
         else:
             for line in votemsg.content.splitlines():
                 if ' - ' in line:
-                    submitted.append(line.split(" - ")[1]).lstrip("<").rstrip(">")
+                    submitted.append(line.split(" - ")[1].lstrip("<").rstrip(">"))
         timed = discord.utils.utcnow() - datetime.timedelta(days=31)
         async for message in channel.history(after=timed,oldest_first=True,limit=None):
             if not message.author in usrlib:
@@ -241,15 +233,7 @@ async def endvote(ctx):
     f"The winner is {submitted[EMOJI_ALPHABET.index(win_id)]}"
     f" with {vote[win_id]} vote{'s'[:vote[win_id]^1]}!")
     await message.add_reaction('🎉')
-    def check(msg):
-        return msg.type == discord.MessageType.pins_add and msg.reference.message_id == message.id
-    task = asyncio.create_task(bot.wait_for('raw_message_edit', check=check))
-    try:
-        await message.pin()
-    except discord.HTTPException:
-        task.cancel()
-    pnned = await task
-    await pnned.delete()
+    await message.pin()
     logging.info("Vote ended in %s by %s at %s",
     str(channel), str(oper), str(discord.utils.utcnow()))
     config.lastwin = message
