@@ -212,15 +212,14 @@ async def endvote(ctx,
     role = config.mention
     await channel.send("Gathering votes and applying fraud protection... (This may take a while)")
     async with channel.typing():
-        if votemsg.embeds:
-            if votemsg.embeds[0].description:
-                for line in votemsg.embeds[0].description.splitlines():
-                    if '-' in line:
-                        submitted.append(line.split(" - ")[1])
+        if votemsg.embeds and votemsg.embeds[0].description and votemsg.embeds[0].title == "Vote":
+            for line in votemsg.embeds[0].description.splitlines():
+                if ' - ' in line:
+                    submitted.append(line.split(" - ")[1]).lstrip("<" ).rstrip(">")
         else:
             for line in votemsg.content.splitlines():
-                if '-' in line:
-                    submitted.append(line.split(" - ")[1])
+                if ' - ' in line:
+                    submitted.append(line.split(" - ")[1]).lstrip("<").rstrip(">")
         timed = discord.utils.utcnow() - datetime.timedelta(days=31)
         async for message in channel.history(after=timed,oldest_first=True,limit=None):
             if not message.author in usrlib:
