@@ -197,6 +197,8 @@ async def endvote(ctx):
     submitted = []
     vote = {}
     usrlib = {}
+    disregarded = []
+    disreg_total = 0
     role = config.mention
 
     if ctx != 'INTERNAL':
@@ -236,9 +238,20 @@ async def endvote(ctx):
                 EMOJI_ALPHABET.index(reaction.emoji) < len(submitted):
                 vote[reaction.emoji] = 0
                 async for user in reaction.users():
+                    flag_a = False
                     if user != bot.user and user in usrlib:
                         if usrlib[user] >= 5:
                             vote[reaction.emoji] += 1
+                        else:
+                            flag_a = True
+                    elif user != bot.user:
+                        flag_a = True
+
+                    if flag_a:
+                        disreg_total += 1
+                        if user not in disregarded:
+                            disregarded.append(user)
+                        logging.debug("Disregarded: %s", str(user))
         logging.debug("Votes: %s", str(vote))
 
     msg_text = "This week's featured results are:\n"
@@ -254,6 +267,27 @@ async def endvote(ctx):
     f" with {vote[win_id]} vote{'s'[:vote[win_id]^1]}!")
     await message.add_reaction('🎉')
     await message.pin()
+
+    if disregarded:
+        fraport_text = f"Total disregarded votes: {disreg_total}\n" + \
+                        f"Total disregarded users: {len(disregarded)}\n" + \
+                        "Disregarded users:\n"
+        for usr in disregarded:
+            if usr in usrlib:
+                fraport_text += f"{usr.mention} - {usrlib[usr]} message{'s'[:usrlib[usr]^1]}\n"
+            else:
+                fraport_text += f"{usr.mention} - 0 messages\n"
+        fraprot = discord.Embed(title="Fraud Protection Log",
+            description=fraport_text, color=0xfc0303)
+        fraprot.set_footer(text="This is a public safety announcement.")
+
+    else:
+        fraprot = discord.Embed(title="Fraud Protection Log",
+            description="No users were disregarded.", color=0x00fff7)
+        fraprot.set_footer(text="Thank you for your cooperation.")
+
+    await channel.send(embed=fraprot)
+
     logging.info("Vote ended in %s by %s at %s",
     str(channel), str(oper), str(discord.utils.utcnow()))
     config.lastwin = message
