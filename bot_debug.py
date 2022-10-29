@@ -1,14 +1,16 @@
 """This is the main file for the bot in debug mode.
 It contains a limited version of the bot's commands and events.
 """
-import logging
-import datetime
-import re
-import os
 import asyncio
+import datetime
+import logging
+import os
+import re
+
 import discord
 from discord.ext import commands
-from variables import intents, handler, EMOJI_ALPHABET, VERSION, Config, Secret
+
+from variables import EMOJI_ALPHABET, VERSION, Config, Secret, handler, intents
 
 bot = commands.Bot(command_prefix='<', intents=intents)
 config = Config(bot)
@@ -42,6 +44,7 @@ async def override(ctx, command: str = commands.parameter(default=None,descripti
     """Various commands for testing."""
     await ctx.send("Atemptting override..")
     logging.info("Owner override triggered: %s", command)
+
     if command == "testhist":
         async with ctx.typing():
             usrlib = {}
@@ -66,6 +69,7 @@ async def override(ctx, command: str = commands.parameter(default=None,descripti
                 vote = "No vote message found."
             await ctx.author.send(vote)
             logging.debug("Test History results %s", vote)
+
     elif command == "testget":
         submitted = []
         submitees = []
@@ -81,10 +85,12 @@ async def override(ctx, command: str = commands.parameter(default=None,descripti
         submitted = list(dict.fromkeys(submitted))
         await ctx.author.send(submitted)
         logging.debug("Test Gathering results %s", submitted)
+
     elif command == "reboot":
         logging.info("Rebooting...")
         await ctx.send("Rebooting...")
         await bot.close()
+
     elif command == "pull":
         pull = await asyncio.create_subprocess_shell("git pull",
                                                     stdout=asyncio.subprocess.PIPE,
@@ -101,11 +107,13 @@ async def override(ctx, command: str = commands.parameter(default=None,descripti
         await ctx.send("Rebooting...")
         logging.info("Rebooting...")
         await bot.close()
+
     elif command == "prod":
         config.mode = "prod"
         logging.info("Rebooting with production mode...")
         await ctx.send("Switching to normal mode...")
         await bot.close()
+
     else:
         await ctx.send("Invalid override command.")
 
@@ -121,15 +129,18 @@ async def edit_config(ctx,
         gld = ctx.guild
         config.guild = gld
         await ctx.send(f"Guild set to {gld}")
+
     elif setting == "channel":
         chn = ctx.channel
         config.channel = chn
         await ctx.send(f"Channel set to {chn.mention}")
+
     elif setting == "lastvote":
         if value is None:
             raise commands.BadArgument("Missing message ID")
         config.lastvote = await config.channel.fetch_message(value)
         await ctx.send(f"Last vote set to {value}")
+
     elif setting == "lastwin":
         if value is None:
             raise commands.BadArgument("Missing message ID")

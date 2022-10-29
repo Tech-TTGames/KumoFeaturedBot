@@ -1,6 +1,7 @@
 """This file is used to control in which mode to run the bot based on the config.json file"""
 import json
 import logging
+
 try:
     with open('config.json',encoding="utf-8",mode='r') as f:
         MODE = json.load(f)["mode"]

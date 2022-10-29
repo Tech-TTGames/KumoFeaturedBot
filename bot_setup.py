@@ -1,8 +1,10 @@
 '''Bot setup module. Runs if config.json is not found.'''
-import logging
 import json
+import logging
+
 from discord.ext import commands
-from variables import Secret, VERSION, intents, handler
+
+from variables import VERSION, Secret, handler, intents
 
 bot = commands.Bot(command_prefix='.', intents=intents)
 secret = Secret()
@@ -22,11 +24,14 @@ async def setup(ctx):
     message = await ctx.author.send("Hello! I'm going to ask you a few questions to get started."
     " Use 'cancel' anytime to cancel the setup process.")
     dm_channel = message.channel
+
     def dm_from_user(msg):
         return msg.channel == dm_channel
+
     await dm_channel.send("Please select the prefix for the bot. (During setup, the prefix is '.')")
     prefi = await bot.wait_for('message', check=dm_from_user)
     confi["prefix"] = prefi.content
+
     await dm_channel.send("Please provide the ID of the Guild that the bot will function in:")
     while True: # Get guild ID
         gld = await bot.wait_for('message',check=dm_from_user)
@@ -39,6 +44,7 @@ async def setup(ctx):
                 confi["guild"] = guild.id
                 await dm_channel.send(f"Guild set to {guild.name}.")
                 break
+
         else:
             if gld.content == 'cancel':
                 return await dm_channel.send("Setup cancelled.")
@@ -57,6 +63,7 @@ async def setup(ctx):
                 confi["channel"] = channel.id
                 await dm_channel.send(f"Channel set to {channel.mention}.")
                 break
+
         else:
             if chn.content == 'cancel':
                 return await dm_channel.send("Setup cancelled.")
@@ -74,6 +81,7 @@ async def setup(ctx):
                 confi["role"] = role.id
                 await dm_channel.send(f"Role {role} has been set as the bot user role.")
                 break
+
         else:
             if rol.content == 'cancel':
                 return await dm_channel.send("Setup cancelled.")
@@ -91,6 +99,7 @@ async def setup(ctx):
                 confi["mention"] = role.id
                 await dm_channel.send(f"Role {role} has been set as the mention role.")
                 break
+
         else:
             if rol.content == 'cancel':
                 return await dm_channel.send("Setup cancelled.")

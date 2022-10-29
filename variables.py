@@ -1,14 +1,14 @@
 '''Declare variables that aren't changed between debug and production'''
-from logging.handlers import RotatingFileHandler
-from datetime import datetime, timezone
-from typing import Union, Optional
 import json
+from datetime import datetime, timezone
+from logging.handlers import RotatingFileHandler
+from typing import Optional, Union
+
 import discord
 from discord.ext import commands
 
-
 #v[major].[minor].[release].[build]
-VERSION = "v1.0.2.1b"
+VERSION = "v1.0.2.1c"
 EMOJI_ALPHABET = ["\U0001F1E6","\U0001F1E7","\U0001F1E8","\U0001F1E9","\U0001F1EA","\U0001F1EB",
                 "\U0001F1EC","\U0001F1ED","\U0001F1EE","\U0001F1EF","\U0001F1F0","\U0001F1F1",
                 "\U0001F1F2","\U0001F1F3","\U0001F1F4","\U0001F1F5","\U0001F1F6","\U0001F1F7",
