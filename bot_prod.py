@@ -121,11 +121,11 @@ async def startvote(ctx,
         if votemsg.embeds and votemsg.embeds[0].description and votemsg.embeds[0].title == "Vote":
             for line in votemsg.embeds[0].description.splitlines():
                 if ' - ' in line:
-                    submitted.append(line.split(" - ")[1].lstrip("<" ).rstrip(">"))
+                    submitted_old.append(line.split(" - ")[1].lstrip("<" ).rstrip(">"))
         else:
             for line in votemsg.content.splitlines():
                 if ' - ' in line:
-                    submitted.append(line.split(" - ")[1].lstrip("<").rstrip(">"))
+                    submitted_old.append(line.split(" - ")[1].lstrip("<").rstrip(">"))
 
     role = config.mention
     await ctx.send("Gathering submissions...",delete_after=10)
