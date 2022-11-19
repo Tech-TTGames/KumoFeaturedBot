@@ -70,11 +70,13 @@ async def on_command_error(ctx, error):
 async def on_ready():
     """This event is called when the bot is ready to be used."""
     logging.info("%s has connected to Discord!", str(bot.user))
-    if config.closetime:
+    if config.closetime and not config.armed:
+        config.armed = True
         logging.info("Resuming vote at %s", config.closetime)
         await discord.utils.sleep_until(config.closetime)
         logging.info("Closing vote via INTERNAL event.")
         await endvote("INTERNAL")  # type: ignore
+    config.armed = True
 
 @bot.command(brief="Pings the bot.",
             description="Pings the bot. What do you expect.")

@@ -8,7 +8,7 @@ import discord
 from discord.ext import commands
 
 #v[major].[minor].[release].[build]
-VERSION = "v1.0.2.3"
+VERSION = "v1.0.2.3A"
 EMOJI_ALPHABET = ["\U0001F1E6","\U0001F1E7","\U0001F1E8","\U0001F1E9","\U0001F1EA","\U0001F1EB",
                 "\U0001F1EC","\U0001F1ED","\U0001F1EE","\U0001F1EF","\U0001F1F0","\U0001F1F1",
                 "\U0001F1F2","\U0001F1F3","\U0001F1F4","\U0001F1F5","\U0001F1F6","\U0001F1F7",
@@ -43,6 +43,7 @@ class Config:
     '''Class for convinient config access'''
     def __init__(self,bot: commands.Bot) -> None:
         self._file = 'config.json'
+        self.armed = False
         with open(self._file,encoding="utf-8",mode='r') as config_f:
             self._config = json.load(config_f)
         self._bt = bot
@@ -57,6 +58,8 @@ class Config:
         with open(self._file,encoding="utf-8",mode='w') as config_f:
             json.dump(self._config,config_f,indent=4)
             config_f.truncate()
+
+    # GETTERS AND SETTERS FOLLOW
 
     @property
     def mode(self) -> str:
