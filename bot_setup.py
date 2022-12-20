@@ -19,8 +19,7 @@ async def on_ready():
 async def setup(ctx):
     """Starts the setup process."""
     await ctx.send(f"Starting setup of KumoFeaturedBot {VERSION}...")
-    confi = {}
-    confi["mode"] = "prod"
+    confi = {"mode": "prod"}
     message = await ctx.author.send("Hello! I'm going to ask you a few questions to get started."
     " Use 'cancel' anytime to cancel the setup process.")
     dm_channel = message.channel
