@@ -147,6 +147,12 @@ async def edit_config(ctx,
         config.lastwin = await config.channel.fetch_message(value)
         await ctx.send(f"Last win set to {value}")
 
+    elif setting == "voterunning":
+        if value is None:
+            raise commands.BadArgument("Missing status.")
+        config.vote_running = bool(value)
+        await ctx.send(f"Vote running set to {bool(value)}")
+
 
 def start():
     """Starts the bot."""

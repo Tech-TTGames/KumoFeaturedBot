@@ -1,6 +1,7 @@
 '''Bot setup module. Runs if config.json is not found.'''
 import json
 import logging
+from typing import Dict, Any
 
 from discord.ext import commands
 
@@ -19,7 +20,7 @@ async def on_ready():
 async def setup(ctx):
     """Starts the setup process."""
     await ctx.send(f"Starting setup of KumoFeaturedBot {VERSION}...")
-    confi = {"mode": "prod"}
+    confi: Dict[str, Any] = {"mode": "prod"}
     message = await ctx.author.send("Hello! I'm going to ask you a few questions to get started."
     " Use 'cancel' anytime to cancel the setup process.")
     dm_channel = message.channel
