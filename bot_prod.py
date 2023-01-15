@@ -143,7 +143,7 @@ async def startvote(ctx,
     logging.debug("New: %s", str(submitted))
     submitted = list(dict.fromkeys(submitted))
 
-    await ctx.send(f"Found {len(submitted)} valid submission(s).\nPrepearing Vote...",
+    await ctx.send(f"Found {len(submitted)} valid submission(s).\nPreparing Vote...",
                 delete_after=10)
     vote_text = ""
     shuffle(submitted)
