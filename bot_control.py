@@ -3,7 +3,7 @@ import json
 import logging
 
 try:
-    with open('config.json',encoding="utf-8",mode='r') as f:
+    with open('config.json', encoding="utf-8", mode='r') as f:
         MODE = json.load(f)["mode"]
 except FileNotFoundError:
     logging.critical("config.json not found. Entering setup mode.")

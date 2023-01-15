@@ -167,8 +167,12 @@ async def startvote(ctx,
 
     if clear:
         await ctx.send("Clearing channel...",delete_after=10)
-        await ctx.channel.purge()
-        await ctx.send("Channel has been cleared.",delete_after=10)
+        try:
+            await ctx.channel.purge(bulk=True)
+        except discord.Forbidden:
+            ctx.send("Error while clearing channel.\nMissing permissions or messages too old.")
+        else:
+            await ctx.send("Channel has been cleared.",delete_after=10)
         await ctx.send("Send suggestions here!\n"
         "Suggestions are accepted until the beginning of the vote.\n"
         "One suggestion/user, please! "
