@@ -1,4 +1,4 @@
-'''Declare variables that aren't changed between debug and production'''
+"""Declare variables that aren't changed between debug and production"""
 import json
 from datetime import datetime, timezone
 from logging.handlers import RotatingFileHandler
@@ -26,7 +26,7 @@ handler = RotatingFileHandler(filename='discord.log',
                             maxBytes=100000)
 
 class Secret:
-    '''Class for secret.json management'''
+    """Class for secret.json management"""
     def __init__(self) -> None:
         self._file = 'secret.json'
         with open(self._file,encoding="utf-8",mode='r') as secret_f:
@@ -40,7 +40,7 @@ class Secret:
         return self.secret
 
 class Config:
-    '''Class for convinient config access'''
+    """Class for convinient config access"""
     def __init__(self,bot: commands.Bot) -> None:
         self._file = 'config.json'
         self.armed = False
@@ -54,7 +54,7 @@ class Config:
         return self._config
 
     def update(self) -> None:
-        '''Update the config.json file to reflect changes'''
+        """Update the config.json file to reflect changes"""
         with open(self._file,encoding="utf-8",mode='w') as config_f:
             json.dump(self._config,config_f,indent=4)
             config_f.truncate()
@@ -63,7 +63,7 @@ class Config:
 
     @property
     def mode(self) -> str:
-        '''Gets current mode'''
+        """Gets current mode"""
         return self._config['mode']
 
     @mode.setter
@@ -73,7 +73,7 @@ class Config:
 
     @property
     def prefix(self) -> str:
-        '''Gets current prefix'''
+        """Gets current prefix"""
         return self._config['prefix']
 
     @prefix.setter
@@ -83,7 +83,7 @@ class Config:
 
     @property
     def guild(self) -> discord.Guild:
-        '''Gets guild from config'''
+        """Gets guild from config"""
         tmp = self._bt.get_guild(self._config['guild'])
         if tmp is None:
             raise ValueError("Guild not found")
@@ -96,7 +96,7 @@ class Config:
 
     @property
     def channel(self) -> Union[discord.TextChannel, discord.Thread]:
-        '''Gets channel from config'''
+        """Gets channel from config"""
         tmp = self._bt.get_channel(self._config['channel'])
         if tmp is None:
             raise ValueError("Channel not found")
@@ -111,7 +111,7 @@ class Config:
 
     @property
     def role(self) -> discord.Role:
-        '''Gets botrole from config'''
+        """Gets botrole from config"""
         tmp = self.guild.get_role(self._config['role'])
         if tmp is None:
             raise ValueError("Role not found")
@@ -124,7 +124,7 @@ class Config:
 
     @property
     def mention(self) -> discord.Role:
-        '''Gets vote mention from config'''
+        """Gets vote mention from config"""
         tmp = self.guild.get_role(self._config['mention'])
         if tmp is None:
             raise ValueError("Role not found")
@@ -137,7 +137,7 @@ class Config:
 
     @property
     async def lastvote(self) -> Optional[discord.Message]:
-        '''Gets last vote's message from config'''
+        """Gets last vote's message from config"""
         if self._config['lastvote'] is None:
             return None
         tmp = await self.channel.fetch_message(self._config['lastvote'])
@@ -152,7 +152,7 @@ class Config:
 
     @property
     async def lastwin(self) -> Optional[discord.Message]:
-        '''Gets last win's message from config'''
+        """Gets last win's message from config"""
         if self._config['lastwin'] is None:
             return None
         tmp = await self.channel.fetch_message(self._config['lastwin'])
@@ -167,7 +167,7 @@ class Config:
 
     @property
     def closetime(self) -> Optional[datetime]:
-        '''Gets time to close running vote on'''
+        """Gets time to close running vote on"""
         if self._config['closetime'] is None:
             return None
         return datetime.fromtimestamp(self._config['closetime'],tz=timezone.utc)
@@ -182,7 +182,7 @@ class Config:
 
     @property
     def vote_running(self) -> bool:
-        '''Checks if a vote is running'''
+        """Checks if a vote is running"""
         return self._config['voterunning']
 
     @vote_running.setter

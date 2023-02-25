@@ -1,4 +1,4 @@
-'''Bot setup module. Runs if config.json is not found.'''
+"""Bot setup module. Runs if config.json is not found."""
 import json
 import logging
 from typing import Dict, Any
