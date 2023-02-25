@@ -6,7 +6,9 @@ import datetime
 import logging
 import os
 import re
-from random import shuffle
+from random import shuffle, choice
+from typing import List, Dict, Union
+from copy import deepcopy
 
 import discord
 from discord.ext import commands
@@ -252,6 +254,7 @@ async def endvote(ctx):
             if reaction.emoji in EMOJI_ALPHABET and \
                 EMOJI_ALPHABET.index(reaction.emoji) < len(submitted):
                 vote[reaction.emoji] = 0
+                disreg_votes[reaction.emoji] = [0,0,0,0]
                 async for user in reaction.users():
                     flag_a = False
                     if user != bot.user and user in usrlib:
@@ -264,6 +267,7 @@ async def endvote(ctx):
 
                     if flag_a:
                         disreg_total += 1
+                        disreg_votes[reaction.emoji][disreg_total] += 1
                         if user not in disregarded:
                             disregarded.append(user)
                         logging.debug("Disregarded: %s", str(user))
@@ -276,7 +280,28 @@ async def endvote(ctx):
 
     embed = discord.Embed(title="RESULTS", description=msg_text, color=0x00ff00)
     await channel.send(embed=embed, reference=votemsg, mention_author=False)
-    win_id = max(vote, key= vote.get)  # type: ignore
+    max_vote = max(vote.values())
+    win_candidates = [k for k, v in vote.items() if v == max_vote]
+    win_id = None
+    if len(win_candidates) > 1:
+        disreg_ranges = list(zip(*[disreg_votes[c] for c in win_candidates]))
+        discard_pile = []
+        for batch in reversed(disreg_ranges):
+            tmp_set = list(deepcopy(batch))
+            for i in discard_pile:
+                tmp_set.pop(i)
+            tmp_set.sort()
+            for i in range(1,len(tmp_set)):
+                if tmp_set[i] != tmp_set[0]:
+                    discard_pile.append(batch.index(tmp_set[i]))
+            if len(discard_pile) == len(win_candidates)-1:
+                win_id = win_candidates[batch.index(tmp_set[0])]
+    else:
+        win_id = win_candidates[0]
+
+    if win_id is None:
+        win_id = choice(win_candidates)
+
     message = await channel.send(f"{role.mention} This week's featured results are in!\n"
     f"The winner is {submitted[EMOJI_ALPHABET.index(win_id)]}"
     f" with {vote[win_id]} vote{'s'[:vote[win_id]^1]}!")
