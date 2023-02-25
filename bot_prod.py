@@ -208,11 +208,12 @@ async def startvote(ctx,
 async def endvote(ctx):
     """This command is used to end a vote."""
     channel = config.channel
-    submitted = []
-    vote = {}
-    usrlib = {}
-    disregarded = []
-    disreg_total = 0
+    submitted: List[str] = []
+    vote: Dict[str,int] = {}
+    usrlib: Dict[Union[discord.Member,discord.User],int] = {}
+    disregarded: List[Union[discord.Member,discord.User]] = []
+    disreg_votes: Dict[str,List[int]] = {}
+    disreg_total: int = 0
     role = config.mention
 
     if ctx != 'INTERNAL':
