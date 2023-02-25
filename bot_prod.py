@@ -105,7 +105,9 @@ async def startvote(ctx,
                     clear: bool = commands.parameter(default=False,
                     description="Clear channel after vote? (True/False)"),
                     presend: bool = commands.parameter(default=False,
-                    description="Send message links before vote? (True/False)")):
+                    description="Send message links before vote? (True/False)"),
+                    cap: int = commands.parameter(default=8,
+                    description="Max submissions to vote on.")):
     """This command is used to start a vote."""
     submitted = []
     submitted_old = []
@@ -141,12 +143,18 @@ async def startvote(ctx,
                     submitees.append(message.author)
     logging.debug("Old: %s", str(submitted_old))
     logging.debug("New: %s", str(submitted))
-    submitted = list(dict.fromkeys(submitted))
+    submitted = list(dict.fromkeys(submitted)) # Remove duplicates
+    shuffle(submitted)
 
     await ctx.send(f"Found {len(submitted)} valid submission(s).\nPreparing Vote...",
-                delete_after=10)
+                delete_after=60)
+
+    if len(submitted) > cap:
+        await ctx.send(f"Vote capped at {cap} submissions."
+                       f" {len(submitted)-cap} submissions dismissed.",delete_after=60)        
+        submitted = submitted[:cap]
+
     vote_text = ""
-    shuffle(submitted)
     for i, sub in enumerate(submitted):
         vote_text += f"{EMOJI_ALPHABET[i]} - <{sub}>\n"
         if presend:
