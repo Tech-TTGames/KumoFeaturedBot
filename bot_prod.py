@@ -290,12 +290,13 @@ async def endvote(ctx):
             tmp_set = list(deepcopy(batch))
             for i in discard_pile:
                 tmp_set.pop(i)
+            if len(tmp_set) == 1:
+                win_id = win_candidates[batch.index(tmp_set[0])]
+                break
             tmp_set.sort()
             for i in range(1,len(tmp_set)):
                 if tmp_set[i] != tmp_set[0]:
                     discard_pile.append(batch.index(tmp_set[i]))
-            if len(discard_pile) == len(win_candidates)-1:
-                win_id = win_candidates[batch.index(tmp_set[0])]
     else:
         win_id = win_candidates[0]
 
