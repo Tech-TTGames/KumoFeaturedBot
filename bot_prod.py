@@ -266,7 +266,7 @@ async def endvote(ctx):
         f"{'s'[:vote[EMOJI_ALPHABET[i]]^1]}\n"
 
     embed = discord.Embed(title="RESULTS", description=msg_text, color=0x00ff00)
-    await channel.send(embed=embed)
+    await channel.send(embed=embed, reference=votemsg, mention_author=False)
     win_id = max(vote, key= vote.get)  # type: ignore
     message = await channel.send(f"{role.mention} This week's featured results are in!\n"
     f"The winner is {submitted[EMOJI_ALPHABET.index(win_id)]}"
