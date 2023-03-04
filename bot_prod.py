@@ -46,6 +46,7 @@ def is_owner():
     return app_commands.check(predicate)
 
 
+
 @bot.event
 async def on_command_error(ctx: discord.Interaction, error):
     """The event triggered when an error is raised while invoking a command."""
@@ -578,6 +579,7 @@ async def setmention(interaction: discord.Interaction, mention: discord.Role) ->
     await interaction.response.send_message(
         f"Role {mention} has been set to be mentioned."
     )
+
 
 
 def start():

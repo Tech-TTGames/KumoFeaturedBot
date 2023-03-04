@@ -8,7 +8,7 @@ import discord
 from discord.ext import commands
 
 # v[major].[minor].[release].[build]
-VERSION = "v1.1.0.0-INDEV"
+VERSION = "v1.1.0.0"
 EMOJI_ALPHABET = [
     "\U0001F1E6",
     "\U0001F1E7",
@@ -61,6 +61,7 @@ class Secret:
 
     def __dict__(self) -> dict:
         return self._secret
+
 
 
 class Config:
