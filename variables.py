@@ -144,6 +144,8 @@ class Config:
     @property
     def role_id(self) -> int:
         """Gets botrole from config"""
+        if self._config["role"] is None:
+            raise ValueError("Role not set")
         return self._config["role"]
 
     @role.setter
@@ -167,12 +169,15 @@ class Config:
     @property
     async def lastvote(self) -> Optional[discord.Message]:
         """Gets last vote's message from config"""
-        if self._config["lastvote"] is None:
+        try:
+            if self._config["lastvote"] is None:
+                return None
+            tmp = await self.channel.fetch_message(self._config["lastvote"])
+            if tmp is None:
+                raise ValueError("Message not found")
+            return tmp
+        except KeyError:
             return None
-        tmp = await self.channel.fetch_message(self._config["lastvote"])
-        if tmp is None:
-            raise ValueError("Message not found")
-        return tmp
 
     @lastvote.setter
     def lastvote(self, msg: discord.Message) -> None:
@@ -182,12 +187,15 @@ class Config:
     @property
     async def lastwin(self) -> Optional[discord.Message]:
         """Gets last win's message from config"""
-        if self._config["lastwin"] is None:
+        try:
+            if self._config["lastwin"] is None:
+                return None
+            tmp = await self.channel.fetch_message(self._config["lastwin"])
+            if tmp is None:
+                raise ValueError("Message not found")
+            return tmp
+        except KeyError:
             return None
-        tmp = await self.channel.fetch_message(self._config["lastwin"])
-        if tmp is None:
-            raise ValueError("Message not found")
-        return tmp
 
     @lastwin.setter
     def lastwin(self, msg: discord.Message) -> None:
@@ -197,9 +205,10 @@ class Config:
     @property
     def closetime(self) -> Optional[datetime]:
         """Gets time to close running vote on"""
-        if self._config["closetime"] is None:
+        try:
+            return datetime.fromtimestamp(self._config["closetime"], tz=timezone.utc)
+        except KeyError:
             return None
-        return datetime.fromtimestamp(self._config["closetime"], tz=timezone.utc)
 
     @closetime.setter
     def closetime(self, time: Optional[datetime]) -> None:
@@ -212,7 +221,10 @@ class Config:
     @property
     def vote_running(self) -> bool:
         """Checks if a vote is running"""
-        return self._config["voterunning"]
+        try:
+            return self._config["voterunning"]
+        except KeyError:
+            return False
 
     @vote_running.setter
     def vote_running(self, running: bool) -> None:
@@ -222,7 +234,10 @@ class Config:
     @property
     def blacklist(self) -> List[int]:
         """Gets blacklist"""
-        return self._config["blacklist"]
+        try:
+            return self._config["blacklist"]
+        except KeyError:
+            return []
 
     @blacklist.setter
     def blacklist(self, blacklist: List[int]) -> None:
