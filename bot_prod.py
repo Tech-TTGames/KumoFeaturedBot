@@ -415,9 +415,11 @@ async def endvote(interaction: discord.Interaction) -> None:
         tiebreak = 2
         win_id = choice(win_candidates)
 
-    message_txt = f"{role.mention} This week's featured results are in!\n" + \
-        f"The winner is {submitted[EMOJI_ALPHABET.index(win_id)]}" + \
-        f" with {vote[win_id]} vote{'s'[:vote[win_id]^1]}!"
+    message_txt = (
+        f"{role.mention} This week's featured results are in!\n"
+        + f"The winner is {submitted[EMOJI_ALPHABET.index(win_id)]}"
+        + f" with {vote[win_id]} vote{'s'[:vote[win_id]^1]}!"
+    )
 
     if tiebreak == 1:
         message_txt += "\n(TIB1: Tie broken by disregarded votes)"
