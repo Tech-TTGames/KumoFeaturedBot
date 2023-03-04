@@ -325,7 +325,10 @@ async def endvote(interaction: discord.Interaction) -> None:
         async for message in channel.history(
             after=timed, oldest_first=True, limit=None
         ):
-            if message.author not in usrlib:
+            if (
+                message.author not in usrlib
+                and message.author.id not in config.blacklist
+            ):
                 usrlib[message.author] = 1
             else:
                 usrlib[message.author] += 1
@@ -346,12 +349,16 @@ async def endvote(interaction: discord.Interaction) -> None:
                             vote[reaction.emoji] += 1
                         else:
                             flag_a = True
-                    elif user != bot.user:
+                    elif user != bot.user and user.id not in config.blacklist:
                         flag_a = True
 
                     if flag_a:
                         disreg_total += 1
-                        disreg_votes[reaction.emoji][disreg_total] += 1
+                        try:
+                            usrlib_count = usrlib[user]
+                        except KeyError:
+                            usrlib_count = 0
+                        disreg_votes[reaction.emoji][usrlib_count] += 1
                         if user not in disregarded:
                             disregarded.append(user)
                         logging.debug("Disregarded: %s", str(user))
@@ -364,36 +371,61 @@ async def endvote(interaction: discord.Interaction) -> None:
             + f"{'s'[:vote[EMOJI_ALPHABET[i]]^1]}\n"
         )
 
-    embed = discord.Embed(title="RESULTS", description=msg_text, color=0x00FF00)
-    await channel.send(embed=embed, reference=votemsg, mention_author=False)
+    # Create an embed message with the voting results and send it to the channel
+    results_embed = discord.Embed(title="RESULTS", description=msg_text, color=0x00FF00)
+    await channel.send(embed=results_embed, reference=votemsg, mention_author=False)
+
+    # Determine the candidate with the highest number of votes
     max_vote = max(vote.values())
     win_candidates = [k for k, v in vote.items() if v == max_vote]
     win_id = None
+    tiebreak = 0
+
+    # If there are multiple candidates with the same number of votes, apply tie-breaking rules
     if len(win_candidates) > 1:
+        # Create a list of disregarded votes for each candidate
         disreg_ranges = list(zip(*[disreg_votes[c] for c in win_candidates]))
         discard_pile = []
+
+        # Apply tie-breaking rules to determine the winner
         for batch in reversed(disreg_ranges):
+            # Make a copy of the batch to avoid modifying the original
             tmp_set = list(deepcopy(batch))
+
+            # Remove any indices that have already been discarded in previous iterations
             for i in discard_pile:
                 tmp_set.pop(i)
+
+            # If there is only one vote left in the batch, that candidate wins
             if len(tmp_set) == 1:
                 win_id = win_candidates[batch.index(tmp_set[0])]
+                tiebreak = 1
                 break
-            tmp_set.sort()
+
+            # Sort the votes in descending order and discard any votes that are lower than highest
+            tmp_set.sort(reverse=True)
             for i in range(1, len(tmp_set)):
                 if tmp_set[i] != tmp_set[0]:
                     discard_pile.append(batch.index(tmp_set[i]))
     else:
         win_id = win_candidates[0]
 
+    # If there is still a tie, choose a winner randomly
     if win_id is None:
+        tiebreak = 2
         win_id = choice(win_candidates)
 
-    message = await channel.send(
-        f"{role.mention} This week's featured results are in!\n"
-        f"The winner is {submitted[EMOJI_ALPHABET.index(win_id)]}"
+    message_txt = f"{role.mention} This week's featured results are in!\n" + \
+        f"The winner is {submitted[EMOJI_ALPHABET.index(win_id)]}" + \
         f" with {vote[win_id]} vote{'s'[:vote[win_id]^1]}!"
-    )
+
+    if tiebreak == 1:
+        message_txt += "\n(TIB1: Tie broken by disregarded votes)"
+    elif tiebreak == 2:
+        message_txt += "\n(TIB2: Tie broken randomly)"
+
+    message = await channel.send(message_txt)
+
     await message.add_reaction("🎉")
     await message.pin()
 
@@ -408,6 +440,8 @@ async def endvote(interaction: discord.Interaction) -> None:
                 fraport_text += (
                     f"{usr.mention} - {usrlib[usr]} message{'s'[:usrlib[usr]^1]}\n"
                 )
+            elif usr.id not in config.blacklist:
+                fraport_text += f"{usr.mention} - Blacklisted\n"
             else:
                 fraport_text += f"{usr.mention} - 0 messages\n"
         fraprot = discord.Embed(
@@ -456,6 +490,24 @@ async def autoclose(interaction: discord.Interaction, time: int = 24) -> None:
         logging.info("Vote already closed.")
         return
     await endvote(interaction)  # type: ignore
+
+
+@bot.tree.command(name="blacklist", description="Blacklists a user.")
+@app_commands.checks.has_role(config.role_id)
+async def blacklist(interaction: discord.Interaction, user: discord.User) -> None:
+    """This command is used to blacklist a user from voting."""
+    blacklst = config.blacklist
+    if user.id in blacklst:
+        blacklst.remove(user.id)
+        await interaction.response.send_message(
+            f"User {user.mention} unblacklisted.", ephemeral=True
+        )
+    else:
+        blacklst.append(user.id)
+        await interaction.response.send_message(
+            f"User {user.mention} blacklisted.", ephemeral=True
+        )
+    config.blacklist = blacklst
 
 
 @bot.tree.command(name="override", description="Tech's admin commands.")

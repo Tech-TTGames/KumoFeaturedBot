@@ -2,7 +2,7 @@
 import json
 from datetime import datetime, timezone
 from logging.handlers import RotatingFileHandler
-from typing import Optional, Union
+from typing import List, Optional, Union
 
 import discord
 from discord.ext import commands
@@ -217,4 +217,15 @@ class Config:
     @vote_running.setter
     def vote_running(self, running: bool) -> None:
         self._config["voterunning"] = running
+        self.update()
+
+    @property
+    def blacklist(self) -> List[int]:
+        """Gets blacklist"""
+        return self._config["blacklist"]
+
+    @blacklist.setter
+    def blacklist(self, blacklist: List[int]) -> None:
+        """Adds or removes a user from the blacklist"""
+        self._config["blacklist"] = blacklist
         self.update()
