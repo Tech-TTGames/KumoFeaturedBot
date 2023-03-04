@@ -45,6 +45,7 @@ def is_owner():
 
     return app_commands.check(predicate)
 
+
 def has_access(check):
     """Returns check but allows the owner to bypass it."""
 
@@ -297,6 +298,7 @@ async def startvote(
 async def endvote(interaction: discord.Interaction) -> None:
     """This command is used to end a vote."""
     await endvote_internal(interaction)
+
 
 async def endvote_internal(interaction: discord.Interaction) -> None:
     """This command is used to end a vote."""
