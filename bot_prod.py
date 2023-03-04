@@ -491,7 +491,7 @@ async def endvote_internal(interaction: discord.Interaction) -> None:
     config.vote_running = False
     config.closetime = None
     if interaction != "INTERNAL":
-        await interaction.response.send_message("Vote ended.", ephemeral=True)
+        await interaction.followup.send("Vote ended.", ephemeral=True)
 
 
 @bot.tree.command(name="autoclose", description="Sets the autoclose time.")
@@ -542,7 +542,7 @@ async def override(interaction: discord.Interaction, command: str) -> None:
 
     if command == "reboot":
         logging.info("Rebooting...")
-        await interaction.response.send_message("Rebooting...")
+        await interaction.followup.send("Rebooting...")
         await bot.close()
 
     elif command == "pull":
@@ -553,7 +553,7 @@ async def override(interaction: discord.Interaction, command: str) -> None:
             cwd=os.getcwd(),
         )
         stdo, stdr = await pull.communicate()
-        await interaction.response.send_message("Pulling...")
+        await interaction.followup.send("Pulling...")
         if stdo:
             await interaction.followup.send(f"[stdout]\n{stdo.decode()}")
             logging.info("[stdout]\n%s", stdo.decode())
@@ -569,11 +569,11 @@ async def override(interaction: discord.Interaction, command: str) -> None:
     elif command == "debug":
         config.mode = "debug"
         logging.info("Rebooting with debug mode...")
-        await interaction.response.send_message("Debug mode enabling...")
+        await interaction.followup.send("Debug mode enabling...")
         await bot.close()
 
     else:
-        await interaction.response.send_message("Invalid override command.")
+        await interaction.followup.send("Invalid override command.")
 
 
 @bot.tree.command(name="accessrole", description="Sets botrole.")
