@@ -30,6 +30,7 @@ async def setup(ctx):
     dm_channel = message.channel
 
     def dm_from_user(msg):
+        """Check if the message is from the user in DMs."""
         return msg.channel == dm_channel
 
     await dm_channel.send(

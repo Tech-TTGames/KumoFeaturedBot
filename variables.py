@@ -2,13 +2,13 @@
 import json
 from datetime import datetime, timezone
 from logging.handlers import RotatingFileHandler
-from typing import Optional, Union
+from typing import List, Optional, Union
 
 import discord
 from discord.ext import commands
 
 # v[major].[minor].[release].[build]
-VERSION = "v1.0.2.3b-DEV1"
+VERSION = "v1.1.0.0"
 EMOJI_ALPHABET = [
     "\U0001F1E6",
     "\U0001F1E7",
@@ -53,14 +53,14 @@ class Secret:
     def __init__(self) -> None:
         self._file = "secret.json"
         with open(self._file, encoding="utf-8", mode="r") as secret_f:
-            self.secret = json.load(secret_f)
-        self.token = self.secret["token"]
+            self._secret = json.load(secret_f)
+        self.token = self._secret["token"]
 
     def __str__(self) -> str:
         return "[OBFUSCATED]"
 
     def __dict__(self) -> dict:
-        return self.secret
+        return self._secret
 
 
 class Config:
@@ -72,7 +72,6 @@ class Config:
         with open(self._file, encoding="utf-8", mode="r") as config_f:
             self._config = json.load(config_f)
         self._bt = bot
-        self.role_id = self._config["role"]
         self.closetime_timestamp = self._config["closetime"]
 
     def __dict__(self) -> dict:
@@ -141,6 +140,11 @@ class Config:
         if tmp is None:
             raise ValueError("Role not found")
         return tmp
+
+    @property
+    def role_id(self) -> int:
+        """Gets botrole from config"""
+        return self._config["role"]
 
     @role.setter
     def role(self, rle: discord.Role) -> None:
@@ -213,4 +217,15 @@ class Config:
     @vote_running.setter
     def vote_running(self, running: bool) -> None:
         self._config["voterunning"] = running
+        self.update()
+
+    @property
+    def blacklist(self) -> List[int]:
+        """Gets blacklist"""
+        return self._config["blacklist"]
+
+    @blacklist.setter
+    def blacklist(self, blacklist: List[int]) -> None:
+        """Adds or removes a user from the blacklist"""
+        self._config["blacklist"] = blacklist
         self.update()

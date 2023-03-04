@@ -68,7 +68,7 @@ async def override(
             votemsg = await config.lastvote
             timed = discord.utils.utcnow() - datetime.timedelta(days=31)
             async for message in channel.history(after=timed, limit=None):
-                if not message.author in usrlib:
+                if message.author not in usrlib:
                     usrlib[message.author] = 1
                 else:
                     usrlib[message.author] += 1
@@ -78,7 +78,7 @@ async def override(
                         vote[reaction.emoji] = 0
                         async for user in reaction.users():
                             if user != bot.user and user in usrlib:
-                                # Nested to avoid errors.
+                                # Splitting up the if statement to avoid KeyError
                                 if usrlib[user] >= 5:
                                     vote[reaction.emoji] += 1
             else:
@@ -95,7 +95,7 @@ async def override(
             async for message in ctx.history(after=timed, limit=None):
                 if (
                     message.content.startswith("https://")
-                    and not message.author in submitees
+                    and message.author not in submitees
                 ):
                     url = re.search(r"(?P<url>https?://[^\s]+)", message.content)
                     if url not in submitted and url is not None:
