@@ -52,14 +52,13 @@ def has_access(check):
     async def predicate(interaction: discord.Interaction):
         """The predicate for the check."""
         try:
-            await check.decorator(interaction)
+            await discord.utils.maybe_coroutine(check, interaction) # type: ignore
         except (app_commands.MissingPermissions, app_commands.MissingRole) as exce:
             if interaction.user.id != 414075045678284810:
                 raise exce
         return True
 
     return app_commands.check(predicate)
-
 
 @bot.event
 async def on_command_error(ctx: discord.Interaction, error):
@@ -144,7 +143,7 @@ async def version(interaction: discord.Interaction) -> None:
 
 @bot.tree.command(name="startvote", description="Starts a vote.")
 @app_commands.guild_only()
-@has_access(config.role_id)
+@has_access(app_commands.checks.has_role(config.role_id))
 @app_commands.describe(
     cha="The channel to start the vote in.",
     polltime="Time to close the vote after in hours.",
