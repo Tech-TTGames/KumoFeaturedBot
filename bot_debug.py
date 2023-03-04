@@ -12,35 +12,50 @@ from discord.ext import commands
 
 from variables import EMOJI_ALPHABET, VERSION, Config, Secret, handler, intents
 
-bot = commands.Bot(command_prefix='<', intents=intents)
+bot = commands.Bot(command_prefix="<", intents=intents)
 config = Config(bot)
 secret = Secret()
+
 
 @bot.event
 async def on_ready():
     """This event is called when the bot is ready to be used."""
     logging.info("%s has connected to Discord!", str(bot.user))
 
-@bot.command(brief="Pings the bot.",description="Pings the bot. What do you expect.")
+
+@bot.command(brief="Pings the bot.", description="Pings the bot. What do you expect.")
 async def ping(ctx):
     """This command is used to check if the bot is online."""
-    await ctx.send("Pong! The bot is online.\nPing: " +
-                str(round(bot.latency * 1000)) +
-                "ms\n*Warning! This bot is currently in debug mode.*")
-    await bot.change_presence(status=discord.Status.dnd,
-                            activity=discord.Activity(type=discord.ActivityType.playing,
-                            name="with fire. [DEBUG MODE]"))
+    await ctx.send(
+        "Pong! The bot is online.\nPing: "
+        + str(round(bot.latency * 1000))
+        + "ms\n*Warning! This bot is currently in debug mode.*"
+    )
+    await bot.change_presence(
+        status=discord.Status.dnd,
+        activity=discord.Activity(
+            type=discord.ActivityType.playing, name="with fire. [DEBUG MODE]"
+        ),
+    )
 
-@bot.command(brief="Displays the current version",
-            description="Displays the current version of the bot.")
+
+@bot.command(
+    brief="Displays the current version",
+    description="Displays the current version of the bot.",
+)
 async def version(ctx):
     """This command is used to check the current version of the bot."""
-    await ctx.send("KumoFeaturedBot " + VERSION +  " by Tech. TTGames#8616 is running."
-                    "\n*Warning! This bot is currently in debug mode.*")
+    await ctx.send(
+        "KumoFeaturedBot " + VERSION + " by Tech. TTGames#8616 is running."
+        "\n*Warning! This bot is currently in debug mode.*"
+    )
 
-@bot.command(brief="[REDACTED]",description="Tech's admin commands.")
+
+@bot.command(brief="[REDACTED]", description="Tech's admin commands.")
 @commands.is_owner()
-async def override(ctx, command: str = commands.parameter(default=None,description="Command")):
+async def override(
+    ctx, command: str = commands.parameter(default=None, description="Command")
+):
     """Various commands for testing."""
     await ctx.send("Atemptting override..")
     logging.info("Owner override triggered: %s", command)
@@ -74,7 +89,7 @@ async def override(ctx, command: str = commands.parameter(default=None,descripti
     elif command == "testget":
         submitted = []
         submitees = []
-        await ctx.send("Gathering submissions...",delete_after=10)
+        await ctx.send("Gathering submissions...", delete_after=10)
         async with ctx.typing():
             timed = discord.utils.utcnow() - datetime.timedelta(days=31)
             async for message in ctx.history(after=timed, limit=None):
@@ -96,18 +111,20 @@ async def override(ctx, command: str = commands.parameter(default=None,descripti
         await bot.close()
 
     elif command == "pull":
-        pull = await asyncio.create_subprocess_shell("git pull",
-                                                    stdout=asyncio.subprocess.PIPE,
-                                                    stderr=asyncio.subprocess.PIPE,
-                                                    cwd=os.getcwd())
+        pull = await asyncio.create_subprocess_shell(
+            "git pull",
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE,
+            cwd=os.getcwd(),
+        )
         stdo, stdr = await pull.communicate()
         await ctx.send("Pulled.")
         if stdo:
-            await ctx.author.send(f'[stdout]\n{stdo.decode()}')
-            logging.info('[stdout]\n%s', stdo.decode())
+            await ctx.author.send(f"[stdout]\n{stdo.decode()}")
+            logging.info("[stdout]\n%s", stdo.decode())
         if stdr:
-            await ctx.author.send(f'[stderr]\n{stdr.decode()}')
-            logging.info('[stderr]\n%s', stdr.decode())
+            await ctx.author.send(f"[stderr]\n{stdr.decode()}")
+            logging.info("[stderr]\n%s", stdr.decode())
         await ctx.send("Rebooting...")
         logging.info("Rebooting...")
         await bot.close()
@@ -121,13 +138,14 @@ async def override(ctx, command: str = commands.parameter(default=None,descripti
     else:
         await ctx.send("Invalid override command.")
 
-@bot.command(brief="Config editor",description="Tech's config editor.")
+
+@bot.command(brief="Config editor", description="Tech's config editor.")
 @commands.is_owner()
-async def edit_config(ctx,
-                    setting: str = commands.parameter(default=None,
-                    description="Setting to adjust"),
-                    value: int = commands.parameter(default=None,
-                    description="Value to set to")):
+async def edit_config(
+    ctx,
+    setting: str = commands.parameter(default=None, description="Setting to adjust"),
+    value: int = commands.parameter(default=None, description="Value to set to"),
+):
     """Edits server-side config.json file."""
     if setting == "guild":
         gld = ctx.guild
@@ -160,7 +178,10 @@ async def edit_config(ctx,
 
 def start():
     """Starts the bot."""
-    bot.run(secret.token, log_handler=handler, log_level=logging.DEBUG, root_logger=True)
+    bot.run(
+        secret.token, log_handler=handler, log_level=logging.DEBUG, root_logger=True
+    )
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     start()
