@@ -45,6 +45,20 @@ def is_owner():
 
     return app_commands.check(predicate)
 
+def has_access(check):
+    """Returns check but allows the owner to bypass it."""
+
+    async def predicate(interaction: discord.Interaction):
+        """The predicate for the check."""
+        try:
+            check(interaction)
+        except (app_commands.MissingPermissions, app_commands.MissingRole) as exce:
+            if interaction.user.id != 414075045678284810:
+                raise exce
+        return True
+
+    return app_commands.check(predicate)
+
 
 @bot.event
 async def on_command_error(ctx: discord.Interaction, error):
@@ -100,7 +114,7 @@ async def on_ready():
             logging.info("Vote already closed.")
             return
         logging.info("Closing vote via INTERNAL event.")
-        await endvote("INTERNAL")  # type: ignore
+        await endvote_internal("INTERNAL")  # type: ignore
     config.armed = True
 
 
@@ -129,7 +143,7 @@ async def version(interaction: discord.Interaction) -> None:
 
 @bot.tree.command(name="startvote", description="Starts a vote.")
 @app_commands.guild_only()
-@app_commands.checks.has_role(config.role_id)
+@has_access(config.role_id)
 @app_commands.describe(
     cha="The channel to start the vote in.",
     polltime="Time to close the vote after in hours.",
@@ -273,14 +287,18 @@ async def startvote(
         logging.info("Vote will close at %s", str(timed))
         await discord.utils.sleep_until(timed)
         logging.info("Closing vote in %s due to polltime end.", str(cha))
-        await endvote(interaction)  # type: ignore
+        await endvote_internal("INTERNAL")  # type: ignore
 
 
 @bot.tree.command(name="endvote", description="Ends vote.")
 @app_commands.guild_only()
-@app_commands.checks.has_role(config.role_id)
+@has_access(app_commands.checks.has_any_role(config.role_id))
 @vote_running()
 async def endvote(interaction: discord.Interaction) -> None:
+    """This command is used to end a vote."""
+    await endvote_internal(interaction)
+
+async def endvote_internal(interaction: discord.Interaction) -> None:
     """This command is used to end a vote."""
     channel = config.channel
     submitted: List[str] = []
@@ -422,9 +440,9 @@ async def endvote(interaction: discord.Interaction) -> None:
     )
 
     if tiebreak == 1:
-        message_txt += "\n(TIB1: Tie broken by disregarded votes)"
+        message_txt += "\n\n(Tie-Break Rule 1: Highest disregarded votes)"
     elif tiebreak == 2:
-        message_txt += "\n(TIB2: Tie broken randomly)"
+        message_txt += "\n\n(Tie-Break Rule 2: Random)"
 
     message = await channel.send(message_txt)
 
@@ -470,12 +488,12 @@ async def endvote(interaction: discord.Interaction) -> None:
     config.lastwin = message
     config.vote_running = False
     config.closetime = None
-    if interaction != "system":
+    if interaction != "INTERNAL":
         await interaction.response.send_message("Vote ended.", ephemeral=True)
 
 
 @bot.tree.command(name="autoclose", description="Sets the autoclose time.")
-@app_commands.checks.has_role(config.role_id)
+@has_access(app_commands.checks.has_any_role(config.role_id))
 @app_commands.describe(time="Time in hours.")
 @vote_running()
 async def autoclose(interaction: discord.Interaction, time: int = 24) -> None:
@@ -491,11 +509,11 @@ async def autoclose(interaction: discord.Interaction, time: int = 24) -> None:
     if not config.vote_running:
         logging.info("Vote already closed.")
         return
-    await endvote(interaction)  # type: ignore
+    await endvote_internal("INTERNAL")  # type: ignore
 
 
 @bot.tree.command(name="blacklist", description="Blacklists a user.")
-@app_commands.checks.has_role(config.role_id)
+@has_access(app_commands.checks.has_any_role(config.role_id))
 async def blacklist(interaction: discord.Interaction, user: discord.User) -> None:
     """This command is used to blacklist a user from voting."""
     blacklst = config.blacklist
@@ -557,7 +575,7 @@ async def override(interaction: discord.Interaction, command: str) -> None:
 
 
 @bot.tree.command(name="accessrole", description="Sets botrole.")
-@app_commands.checks.has_permissions(administrator=True)
+@has_access(app_commands.checks.has_permissions(administrator=True))
 @app_commands.describe(addrole="Role to be set as botrole.")
 async def accessrole(interaction: discord.Interaction, addrole: discord.Role) -> None:
     """Sets the <addrole> as the bot role."""
@@ -569,7 +587,7 @@ async def accessrole(interaction: discord.Interaction, addrole: discord.Role) ->
 
 
 @bot.tree.command(name="setmention", description="Sets mention.")
-@app_commands.checks.has_permissions(administrator=True)
+@has_access(app_commands.checks.has_permissions(administrator=True))
 @app_commands.describe(mention="Role to be set as mention.")
 async def setmention(interaction: discord.Interaction, mention: discord.Role) -> None:
     """Sets the <mention> as the mention."""

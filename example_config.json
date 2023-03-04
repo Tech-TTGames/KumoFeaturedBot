@@ -17,5 +17,10 @@
     "closetime": 1665135816,
     "closetime_info":"Closeteime of the vote. unix timestamp or null",
     "voterunning": false,
-    "voterunning_info":"Is a vote running? true or false"
+    "voterunning_info":"Is a vote running? true or false",
+    "blacklist": [
+        666666666666666666,
+        777777777777777777
+    ],
+    "blacklist_info":"List of user IDs to blacklist from voting. Array of IDs or empty array."
 }
