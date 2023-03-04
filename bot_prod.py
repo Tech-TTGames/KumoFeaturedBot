@@ -26,6 +26,7 @@ def vote_running():
     """Returns wether a vote is running."""
 
     async def predicate(ctx: discord.Interaction):
+        """The predicate for the check."""
         if not config.vote_running or ctx.user == bot.user:
             raise app_commands.CheckFailure("No vote is currently running.")
         return True
@@ -37,6 +38,7 @@ def is_owner():
     """Returns wether the user is the owner of the bot."""
 
     async def predicate(ctx: discord.Interaction):
+        """The predicate for the check."""
         if ctx.user.id != 414075045678284810:
             raise app_commands.CheckFailure("You are not the owner of this bot.")
         return True
@@ -339,6 +341,7 @@ async def endvote(interaction: discord.Interaction) -> None:
                 async for user in reaction.users():
                     flag_a = False
                     if user != bot.user and user in usrlib:
+                        # Splitting up the if statement to avoid KeyErro
                         if usrlib[user] >= 5:
                             vote[reaction.emoji] += 1
                         else:

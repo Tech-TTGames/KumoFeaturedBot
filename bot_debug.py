@@ -63,6 +63,7 @@ async def override(ctx, command: str = commands.parameter(default=None,descripti
                         vote[reaction.emoji] = 0
                         async for user in reaction.users():
                             if user != bot.user and user in usrlib:
+                                # Splitting up the if statement to avoid KeyError
                                 if usrlib[user] >= 5:
                                     vote[reaction.emoji] += 1
             else:
