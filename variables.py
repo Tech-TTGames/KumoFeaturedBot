@@ -206,6 +206,8 @@ class Config:
     def closetime(self) -> Optional[datetime]:
         """Gets time to close running vote on"""
         try:
+            if self._config["closetime"] is None:
+                return None
             return datetime.fromtimestamp(self._config["closetime"], tz=timezone.utc)
         except KeyError:
             return None
@@ -244,3 +246,11 @@ class Config:
         """Adds or removes a user from the blacklist"""
         self._config["blacklist"] = blacklist
         self.update()
+
+    @property
+    def owner_role(self) -> Union[str, int]:
+        """Gets owner role"""
+        try:
+            return self._config["owner_role"]
+        except KeyError:
+            return "Administator"
