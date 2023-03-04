@@ -53,14 +53,14 @@ class Secret:
     def __init__(self) -> None:
         self._file = "secret.json"
         with open(self._file, encoding="utf-8", mode="r") as secret_f:
-            self.secret = json.load(secret_f)
-        self.token = self.secret["token"]
+            self._secret = json.load(secret_f)
+        self.token = self._secret["token"]
 
     def __str__(self) -> str:
         return "[OBFUSCATED]"
 
     def __dict__(self) -> dict:
-        return self.secret
+        return self._secret
 
 
 class Config:

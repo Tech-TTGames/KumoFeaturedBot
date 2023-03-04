@@ -52,8 +52,8 @@ async def override(ctx, command: str = commands.parameter(default=None,descripti
             channel = config.channel
             votemsg = await config.lastvote
             timed = discord.utils.utcnow() - datetime.timedelta(days=31)
-            async for message in channel.history(after=timed,limit=None):
-                if not message.author in usrlib:
+            async for message in channel.history(after=timed, limit=None):
+                if message.author not in usrlib:
                     usrlib[message.author] = 1
                 else:
                     usrlib[message.author] += 1
@@ -76,8 +76,11 @@ async def override(ctx, command: str = commands.parameter(default=None,descripti
         await ctx.send("Gathering submissions...",delete_after=10)
         async with ctx.typing():
             timed = discord.utils.utcnow() - datetime.timedelta(days=31)
-            async for message in ctx.history(after=timed,limit=None):
-                if message.content.startswith('https://') and not message.author in submitees:
+            async for message in ctx.history(after=timed, limit=None):
+                if (
+                    message.content.startswith("https://")
+                    and message.author not in submitees
+                ):
                     url = re.search(r"(?P<url>https?://[^\s]+)", message.content)
                     if url not in submitted and url is not None:
                         submitted.append(str(url.group("url")))

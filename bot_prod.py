@@ -188,7 +188,7 @@ async def startvote(
         async for message in intchannel.history(after=timed, limit=None):
             if (
                 message.content.startswith("https://")
-                and not message.author in submitees
+                and message.author not in submitees
             ):
                 url = re.search(r"(?P<url>https?://[^\s]+)", message.content)
                 if (
@@ -250,7 +250,8 @@ async def startvote(
             "Send suggestions here!\n"
             "Suggestions are accepted until the beginning of the vote.\n"
             "One suggestion/user, please! "
-            "If you suggest more than one thing, all of the following suggestions will be ignored.\n\n"
+            "If you suggest more than one thing, "
+            "all of the following suggestions will be ignored.\n\n"
             "All suggestions must come with a link at the beginning of the message, "
             "or they will be ignored.\n\n"
             "This thread is not for conversation."
@@ -322,7 +323,7 @@ async def endvote(interaction: discord.Interaction) -> None:
         async for message in channel.history(
             after=timed, oldest_first=True, limit=None
         ):
-            if not message.author in usrlib:
+            if message.author not in usrlib:
                 usrlib[message.author] = 1
             else:
                 usrlib[message.author] += 1
