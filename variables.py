@@ -63,7 +63,6 @@ class Secret:
         return self._secret
 
 
-
 class Config:
     """Class for convinient config access"""
 
