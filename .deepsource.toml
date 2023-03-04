@@ -5,9 +5,10 @@ name = "python"
 
   [analyzers.meta]
   runtime_version = "3.x.x"
-
-[[transformers]]
-name = "black"
+  max_line_length = 100
 
 [[transformers]]
 name = "isort"
+
+[[transformers]]
+name = "black"
