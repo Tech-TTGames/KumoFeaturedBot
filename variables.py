@@ -47,7 +47,6 @@ class Config:
         with open(self._file,encoding="utf-8",mode='r') as config_f:
             self._config = json.load(config_f)
         self._bt = bot
-        self.role_id = self._config['role']
         self.closetime_timestamp = self._config['closetime']
 
     def __dict__(self) -> dict:
@@ -116,6 +115,11 @@ class Config:
         if tmp is None:
             raise ValueError("Role not found")
         return tmp
+
+    @property
+    def role_id(self) -> int:
+        """Gets botrole from config"""
+        return self._config['role']
 
     @role.setter
     def role(self, rle: discord.Role) -> None:

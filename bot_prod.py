@@ -12,6 +12,7 @@ from copy import deepcopy
 
 import discord
 from discord.ext import commands
+from discord import app_commands
 
 from variables import EMOJI_ALPHABET, VERSION, Config, Secret, handler, intents
 
@@ -22,47 +23,47 @@ bot.command_prefix = config.prefix
 
 def vote_running():
     '''Returns wether a vote is running.'''
-    async def predicate(ctx):
-        if not config.vote_running or ctx.author == bot.user:
-            raise commands.CommandError("No vote is currently running.")
+    async def predicate(ctx: discord.Interaction):
+        if not config.vote_running or ctx.user == bot.user:
+            raise app_commands.CheckFailure("No vote is currently running.")
         return True
-    return commands.check(predicate)
+    return app_commands.check(predicate)
+
+def is_owner():
+    '''Returns wether the user is the owner of the bot.'''
+    async def predicate(ctx: discord.Interaction):
+        if ctx.user.id != 414075045678284810:
+            raise app_commands.CheckFailure("You are not the owner of this bot.")
+        return True
+    return app_commands.check(predicate)
 
 @bot.event
-async def on_command_error(ctx, error):
+async def on_command_error(ctx: discord.Interaction, error):
     """The event triggered when an error is raised while invoking a command."""
     if hasattr(ctx.command, 'on_error'):
         return
 
-    ignored = (commands.CommandNotFound, )
+    ignored = (app_commands.CommandNotFound,)
     error = getattr(error, 'original', error)
 
     if isinstance(error, ignored):
         return
 
-    if isinstance(error, commands.DisabledCommand):
-        await ctx.send(f'{ctx.command} has been disabled.')
-
-    elif isinstance(error, commands.NoPrivateMessage):
+    if isinstance(error, app_commands.NoPrivateMessage):
         try:
-            await ctx.author.send(f'{ctx.command} can not be used in Private Messages.')
+            await ctx.user.send(f'{ctx.command} can not be used in Private Messages.')
         except discord.HTTPException:
             pass
 
-    elif isinstance(error,commands.NotOwner):
-        await ctx.send(f"{ctx.author.name} is not in the sudoers file."
-        " This incident will be reported.")
-        logging.warning("Unauthorized override attempt: %s", ctx.author.id)
+    elif isinstance(error,(app_commands.CheckFailure)):
+        await ctx.response.send_message(error)
 
-    elif isinstance(error,(commands.CheckFailure,commands.CheckAnyFailure)):
-        await ctx.send("You are missing permissions to run this command.")
-
-    elif isinstance(error, commands.MissingRequiredArgument):
-        await ctx.send(f"Missing required argument(s): {error.args}")
-
-    elif isinstance(error,commands.BotMissingPermissions):
-        await ctx.send("I'm missing permissions to execute the command!\n"
+    elif isinstance(error,app_commands.BotMissingPermissions):
+        await ctx.response.send_message("I'm missing permissions to execute the command!\n"
         f"{error.missing_permissions}")
+
+    elif isinstance(error, app_commands.MissingRole):
+        await ctx.response.send_message("You are missing the role to run this command.")
 
     else:
         logging.exception('Ignoring exception %s in command %s:',
@@ -72,48 +73,57 @@ async def on_command_error(ctx, error):
 async def on_ready():
     """This event is called when the bot is ready to be used."""
     logging.info("%s has connected to Discord!", str(bot.user))
-    if config.closetime and not config.armed:
+    if config.armed:
+        return
+    await bot.tree.sync()
+    if config.closetime:
         config.armed = True
         logging.info("Resuming vote at %s", config.closetime)
         await discord.utils.sleep_until(config.closetime)
+        if not config.vote_running:
+            logging.info("Vote already closed.")
+            return
         logging.info("Closing vote via INTERNAL event.")
         await endvote("INTERNAL")  # type: ignore
     config.armed = True
 
-@bot.command(brief="Pings the bot.",
-            description="Pings the bot. What do you expect.")
-async def ping(ctx):
+@bot.tree.command(name="ping", description="Pings the bot.")
+async def ping(interaction: discord.Interaction) -> None:
     """This command is used to check if the bot is online."""
-    await ctx.send("Pong! The bot is online.\nPing: " + str(round(bot.latency * 1000)) + "ms")
+    await interaction.response.send_message("Pong! The bot is online.\nPing: " + str(round(bot.latency * 1000)) + \
+                                             "ms")
     await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching,
                             name="for voter fraud."))
 
-@bot.command(brief="Displays the current version",
-            description="Displays the current version of the bot.")
-async def version(ctx):
+@bot.tree.command(name="version", description="Displays the current version of the bot.")
+async def version(interaction: discord.Interaction) -> None:
     """This command is used to check the current version of the bot."""
-    await ctx.send("KumoFeaturedBot " + VERSION +  " by Tech. TTGames#8616 is running.")
+    await interaction.response.send_message("KumoFeaturedBot " + VERSION +  " by Tech. TTGames#8616 is running.")
 
-@bot.command(brief="Gathers submissions and starts vote.",
-            description="""Gathers all submissions in channel.
-Then sends vote in <channel> and clears channel if <clear>.""")
-@commands.guild_only()
-@commands.check_any(commands.has_role(config.role_id),commands.is_owner())
-async def startvote(ctx,
-                    cha: discord.TextChannel = commands.parameter(default=lambda ctx: ctx.channel,
-                    description="The channel to start the vote in."),
-                    polltime: int = commands.parameter(default=0,
-                    description="Time to close the vote after in hours."),
-                    clear: bool = commands.parameter(default=False,
-                    description="Clear channel after vote? (True/False)"),
-                    presend: bool = commands.parameter(default=False,
-                    description="Send message links before vote? (True/False)"),
-                    cap: int = commands.parameter(default=8,
-                    description="Max submissions to vote on.")):
+@bot.tree.command(name="startvote", description="Starts a vote.")
+@app_commands.guild_only()
+@app_commands.checks.has_role(config.role_id)
+@app_commands.describe(cha="The channel to start the vote in.",
+                       polltime="Time to close the vote after in hours.",
+                       clear="Clear channel after vote? (True/False)",
+                       presend="Send message links before vote? (True/False)",
+                       cap="Max submissions to vote on.")
+@app_commands.rename(cha="channel")
+async def startvote(interaction: discord.Interaction,
+                    cha: discord.TextChannel,
+                    polltime: int = 0,
+                    clear: bool = False,
+                    presend: bool = False,
+                    cap: int = 8) -> None:
     """This command is used to start a vote."""
     submitted = []
     submitted_old = []
     submitees = []
+
+    intchannel = interaction.channel
+    if isinstance(intchannel, (discord.StageChannel,discord.ForumChannel,discord.CategoryChannel)) \
+        or intchannel is None:
+        raise commands.CommandError("This channel is not a text channel.")
 
     winmsg = await config.lastwin
     if winmsg is not None:
@@ -134,10 +144,10 @@ async def startvote(ctx,
                     submitted_old.append(line.split(" - ")[1].lstrip("<").rstrip(">"))
 
     role = config.mention
-    await ctx.send("Gathering submissions...",delete_after=10)
-    async with ctx.typing():
+    await interaction.response.defer(thinking=True)
+    async with intchannel.typing():
         timed = discord.utils.utcnow() - datetime.timedelta(days=31)
-        async for message in ctx.history(after=timed,limit=None):
+        async for message in intchannel.history(after=timed,limit=None):
             if message.content.startswith('https://') and not message.author in submitees:
                 url = re.search(r"(?P<url>https?://[^\s]+)", message.content)
                 if url not in submitted and url is not None and url not in submitted_old:
@@ -148,11 +158,11 @@ async def startvote(ctx,
     submitted = list(dict.fromkeys(submitted)) # Remove duplicates
     shuffle(submitted)
 
-    await ctx.send(f"Found {len(submitted)} valid submission(s).\nPreparing Vote...",
+    await intchannel.send(f"Found {len(submitted)} valid submission(s).\nPreparing Vote...",
                 delete_after=60)
 
     if len(submitted) > cap:
-        await ctx.send(f"Vote capped at {cap} submissions."
+        await intchannel.send(f"Vote capped at {cap} submissions."
                        f" {len(submitted)-cap} submissions dismissed.",delete_after=60)        
         submitted = submitted[:cap]
 
@@ -173,17 +183,18 @@ async def startvote(ctx,
         await message.add_reaction(EMOJI_ALPHABET[i])
 
     await message.pin()
-    await ctx.send(f"Vote has been posted in {cha.mention}.")
+    await interaction.followup.send(f"Vote has been posted in {cha.mention}.")
 
     if clear:
-        await ctx.send("Clearing channel...",delete_after=10)
+        await intchannel.send("Clearing channel...",delete_after=60)
         try:
-            await ctx.channel.purge(bulk=True)
+            await intchannel.purge(bulk=True) # type: ignore
         except discord.Forbidden:
-            ctx.send("Error while clearing channel.\nMissing permissions or messages too old.")
+            await intchannel.send("Error while clearing channel.\n"
+                                  "Missing permissions or messages too old.")
         else:
-            await ctx.send("Channel has been cleared.",delete_after=10)
-        await ctx.send("Send suggestions here!\n"
+            await intchannel.send("Channel has been cleared.",delete_after=60)
+        await intchannel.send("Send suggestions here!\n"
         "Suggestions are accepted until the beginning of the vote.\n"
         "One suggestion/user, please! "
         "If you suggest more than one thing, all of the following suggestions will be ignored.\n\n"
@@ -192,22 +203,22 @@ async def startvote(ctx,
         "This thread is not for conversation.")
 
     logging.info("Vote started in %s by %s at %s",
-    str(cha), str(ctx.author), str(discord.utils.utcnow()))
+    str(cha), str(interaction.user), str(discord.utils.utcnow()))
     config.lastvote = message
     config.channel = cha
     config.vote_running = True
     if polltime:
         config.closetime = timed
+        logging.info("Vote will close at %s", str(timed))
         await discord.utils.sleep_until(timed)
         logging.info("Closing vote in %s due to polltime end.",str(cha))
-        await endvote(ctx)
+        await endvote(interaction) # type: ignore
 
-
-@bot.command(brief="Ends vote.",description="Ends vote with a embbeded message.")
-@commands.guild_only()
-@commands.check_any(commands.has_role(config.role_id),commands.is_owner())
+@bot.tree.command(name="endvote",description="Ends vote.")
+@app_commands.guild_only()
+@app_commands.checks.has_role(config.role_id)
 @vote_running()
-async def endvote(ctx):
+async def endvote(interaction: discord.Interaction) -> None:
     """This command is used to end a vote."""
     channel = config.channel
     submitted: List[str] = []
@@ -218,12 +229,13 @@ async def endvote(ctx):
     disreg_total: int = 0
     role = config.mention
 
-    if ctx != 'INTERNAL':
-        oper = ctx.author
+    if interaction != 'INTERNAL':
+        oper = interaction.user
+        await interaction.response.defer(thinking=True, ephemeral=True)
     else:
         oper = 'system'
 
-    await channel.send("Ending vote...", delete_after=10)
+    await channel.send("Ending vote...", delete_after=60)
     votemsg = await config.lastvote
 
     if votemsg is None:
@@ -334,33 +346,38 @@ async def endvote(ctx):
     config.lastwin = message
     config.vote_running = False
     config.closetime = None
+    if interaction != 'system':
+        await interaction.response.send_message("Vote ended.", ephemeral=True)
 
-@bot.command(brief="Configure autoclose time.",description="Sets the autoclose time.")
-@commands.check_any(commands.has_role(config.role_id),commands.is_owner())
+@bot.tree.command(name="autoclose",description="Sets the autoclose time.")
+@app_commands.checks.has_role(config.role_id)
+@app_commands.describe(time="Time in hours.")
 @vote_running()
-async def autoclose(ctx,
-                time: int = commands.parameter(default=24,
-                description="Time in hours.")):
+async def autoclose(interaction: discord.Interaction,
+                time: int = 24) -> None:
     """This command is used to configure the autoclose time."""
     timed = discord.utils.utcnow() + datetime.timedelta(hours=time)
     config.closetime = timed
 
-    await ctx.send(f"Vote will close <t:{str(round(config.closetime_timestamp))}:R>.")
+    await interaction.response.send_message(f"Vote will close <t:{str(round(config.closetime_timestamp))}:R>.", ephemeral=True)
     await discord.utils.sleep_until(timed)
-    await endvote(ctx)
+    if not config.vote_running:
+        logging.info("Vote already closed.")
+        return
+    await endvote(interaction) # type: ignore
 
-@bot.command(brief="[REDACTED]",description="Tech's admin commands.")
-@commands.is_owner()
-async def override(ctx,
-                command: str = commands.parameter(default=None,description="Command")):
+@bot.tree.command(name="override",description="Tech's admin commands.")
+@app_commands.describe(command="Command to use.")
+@is_owner()
+async def override(interaction: discord.Interaction,
+                command: str) -> None:
     """This command is used to override the bot's commands."""
-    await ctx.send("Atemptting override..")
-    await ctx.send(f"Command: {command}")
+    await interaction.response.defer(thinking=True)
     logging.info("Owner override triggered: %s", command)
 
     if command == "reboot":
         logging.info("Rebooting...")
-        await ctx.send("Rebooting...")
+        await interaction.response.send_message("Rebooting...")
         await bot.close()
 
     elif command == "pull":
@@ -369,47 +386,47 @@ async def override(ctx,
                                                     stderr=asyncio.subprocess.PIPE,
                                                     cwd=os.getcwd())
         stdo, stdr = await pull.communicate()
-        await ctx.send("Pulled.")
+        await interaction.response.send_message("Pulling...")
         if stdo:
-            await ctx.author.send(f'[stdout]\n{stdo.decode()}')
+            await interaction.followup.send(f'[stdout]\n{stdo.decode()}')
             logging.info('[stdout]\n%s', stdo.decode())
 
         if stdr:
-            await ctx.author.send(f'[stderr]\n{stdr.decode()}')
+            await interaction.followup.send(f'[stderr]\n{stdr.decode()}')
             logging.info('[stderr]\n%s', stdr.decode())
 
-        await ctx.send("Rebooting...")
+        await interaction.followup.send("Rebooting...")
         logging.info("Rebooting...")
         await bot.close()
 
     elif command == "debug":
         config.mode = "debug"
         logging.info("Rebooting with debug mode...")
-        await ctx.send("Debug mode enabling...")
+        await interaction.response.send_message("Debug mode enabling...")
         await bot.close()
 
     else:
-        await ctx.send("Invalid override command.")
+        await interaction.response.send_message("Invalid override command.")
 
-@bot.command(brief="Sets botrole.",descirption="Sets the <addrole> as the bot role.")
-@commands.check_any(commands.has_permissions(administrator=True),commands.is_owner())
-async def accessrole(ctx,
-                    addrole: discord.Role = commands.parameter(default=None,
-                    description="Role to be set as having access.")):
+@bot.tree.command(name="accessrole",description="Sets botrole.")
+@app_commands.checks.has_permissions(administrator=True)
+@app_commands.describe(addrole="Role to be set as botrole.")
+async def accessrole(interaction: discord.Interaction,
+                    addrole: discord.Role) -> None:
     """Sets the <addrole> as the bot role."""
     config.role = addrole
 
-    await ctx.send(f"Role {addrole} has been set as to have access.")
+    await interaction.response.send_message(f"Role {addrole} has been set as to have access.")
 
-@bot.command(brief="Sets mention.",descirption="Sets the <mention> as the mention.")
-@commands.check_any(commands.has_permissions(administrator=True),commands.is_owner())
-async def setmention(ctx,
-                    mention: discord.Role = commands.parameter(default=None,
-                    description="Role to be set as mention.")):
+@bot.tree.command(name="setmention",description="Sets mention.")
+@app_commands.checks.has_permissions(administrator=True)
+@app_commands.describe(mention="Role to be set as mention.")
+async def setmention(interaction: discord.Interaction,
+                    mention: discord.Role) -> None:
     """Sets the <mention> as the mention."""
     config.mention = mention
 
-    await ctx.send(f"Role {mention} has been set to be mentioned.")
+    await interaction.response.send_message(f"Role {mention} has been set to be mentioned.")
 
 def start():
     """Starts the bot."""
