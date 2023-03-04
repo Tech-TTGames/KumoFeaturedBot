@@ -52,7 +52,7 @@ def has_access(check):
     async def predicate(interaction: discord.Interaction):
         """The predicate for the check."""
         try:
-            await check(interaction)
+            await check.predicate(interaction)
         except (app_commands.MissingPermissions, app_commands.MissingRole) as exce:
             if interaction.user.id != 414075045678284810:
                 raise exce

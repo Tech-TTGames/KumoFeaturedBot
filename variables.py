@@ -8,7 +8,7 @@ import discord
 from discord.ext import commands
 
 # v[major].[minor].[release].[build]
-VERSION = "v1.1.0.0a"
+VERSION = "v1.1.0.0b"
 EMOJI_ALPHABET = [
     "\U0001F1E6",
     "\U0001F1E7",
