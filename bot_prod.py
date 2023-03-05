@@ -588,6 +588,7 @@ async def setmention(interaction: discord.Interaction, mention: discord.Role) ->
         f"Role {mention} has been set to be mentioned.", ephemeral=True
     )
 
+
 @bot.command()
 @commands.dm_only()
 @commands.is_owner()
@@ -595,6 +596,7 @@ async def sync(ctx: commands.Context):
     """Syncs the bot's slash commands."""
     await ctx.send("Syncing...")
     await bot.tree.sync()
+
 
 def start():
     """Starts the bot."""
