@@ -16,7 +16,14 @@ from discord.ext import commands
 
 from variables import EMOJI_ALPHABET, VERSION, Config, Secret, handler, intents
 
-bot = commands.Bot(command_prefix=">", intents=intents)  # type: ignore
+bot = commands.Bot(
+    command_prefix=">",
+    intents=intents,
+    status=discord.Status.online,
+    activity=discord.Activity(
+        type=discord.ActivityType.watching, name="for voter fraud."
+    ),
+)
 config = Config(bot)
 secret = Secret()
 bot.command_prefix = config.prefix
@@ -94,7 +101,6 @@ async def on_ready():
     logging.info("%s has connected to Discord!", str(bot.user))
     if config.armed:
         return
-    await bot.tree.sync()
     if config.closetime:
         config.armed = True
         logging.info("Resuming vote at %s", config.closetime)
@@ -112,11 +118,6 @@ async def ping(interaction: discord.Interaction) -> None:
     """This command is used to check if the bot is online."""
     await interaction.response.send_message(
         "Pong! The bot is online.\nPing: " + str(round(bot.latency * 1000)) + "ms"
-    )
-    await bot.change_presence(
-        activity=discord.Activity(
-            type=discord.ActivityType.watching, name="for voter fraud."
-        )
     )
 
 
@@ -162,7 +163,7 @@ async def startvote(
         )
         or intchannel is None
     ):
-        raise commands.CommandError("This channel is not a text channel.")
+        raise app_commands.AppCommandError("This channel is not a text channel.")
 
     winmsg = await config.lastwin
     if winmsg is not None:
@@ -309,7 +310,7 @@ async def endvote_internal(interaction: discord.Interaction) -> None:
     votemsg = await config.lastvote
 
     if votemsg is None:
-        raise commands.errors.CommandError("Vote message not found.")
+        raise app_commands.errors.AppCommandError("Vote message not found.")
     await votemsg.unpin()
     await channel.send(
         "Gathering votes and applying fraud protection... (This may take a while)"
@@ -587,6 +588,13 @@ async def setmention(interaction: discord.Interaction, mention: discord.Role) ->
         f"Role {mention} has been set to be mentioned.", ephemeral=True
     )
 
+@bot.command()
+@commands.dm_only()
+@commands.is_owner()
+async def sync(ctx: commands.Context):
+    """Syncs the bot's slash commands."""
+    await ctx.send("Syncing...")
+    await bot.tree.sync()
 
 def start():
     """Starts the bot."""
