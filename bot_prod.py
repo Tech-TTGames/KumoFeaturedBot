@@ -71,12 +71,13 @@ async def on_command_error(ctx: discord.Interaction, error):
         await ctx.response.send_message(
             "I'm missing permissions to execute the command!\n"
             f"{error.missing_permissions}",
-            ephemeral=True
+            ephemeral=True,
         )
 
     elif isinstance(error, app_commands.MissingRole):
-        await ctx.response.send_message("You are missing the role to run this command.",
-                                         ephemeral=True)
+        await ctx.response.send_message(
+            "You are missing the role to run this command.", ephemeral=True
+        )
 
     else:
         logging.exception(
@@ -571,8 +572,7 @@ async def accessrole(interaction: discord.Interaction, addrole: discord.Role) ->
     config.role = addrole
 
     await interaction.response.send_message(
-        f"Role {addrole} has been set as to have access.",
-        ephemeral=True
+        f"Role {addrole} has been set as to have access.", ephemeral=True
     )
 
 
@@ -584,8 +584,7 @@ async def setmention(interaction: discord.Interaction, mention: discord.Role) ->
     config.mention = mention
 
     await interaction.response.send_message(
-        f"Role {mention} has been set to be mentioned.",
-        ephemeral=True
+        f"Role {mention} has been set to be mentioned.", ephemeral=True
     )
 
 
