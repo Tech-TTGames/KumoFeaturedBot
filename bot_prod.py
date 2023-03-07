@@ -154,6 +154,7 @@ async def startvote(
     submitted = []
     submitted_old = []
     submitees = []
+    disreg_suggs = 0
 
     intchannel = interaction.channel
     if (
@@ -202,15 +203,21 @@ async def startvote(
                     and url is not None
                     and url not in submitted_old
                 ):
+                    if message.author.id in config.blacklist:
+                        disreg_suggs += 1
+                        continue
                     submitted.append(str(url.group("url")))
                     submitees.append(message.author)
     logging.debug("Old: %s", str(submitted_old))
     logging.debug("New: %s", str(submitted))
     submitted = list(dict.fromkeys(submitted))  # Remove duplicates
     shuffle(submitted)
+    disreg_text = ""
+    if disreg_suggs > 0:
+        disreg_text = f"and {disreg_suggs} valid disregarded submission(s)"
 
     await intchannel.send(
-        f"Found {len(submitted)} valid submission(s).\nPreparing Vote...",
+        f"Found {len(submitted)} valid submission(s){disreg_text}.\nPreparing Vote...",
         delete_after=60,
     )
 
@@ -451,7 +458,7 @@ async def endvote_internal(interaction: discord.Interaction) -> None:
                 fraport_text += (
                     f"{usr.mention} - {usrlib[usr]} message{'s'[:usrlib[usr]^1]}\n"
                 )
-            elif usr.id not in config.blacklist:
+            elif usr.id in config.blacklist:
                 fraport_text += f"{usr.mention} - Blacklisted\n"
             else:
                 fraport_text += f"{usr.mention} - 0 messages\n"
