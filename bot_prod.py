@@ -356,7 +356,7 @@ async def endvote_internal(interaction: discord.Interaction) -> None:
                 reaction.emoji
             ) < len(submitted):
                 vote[reaction.emoji] = 0
-                disreg_votes[reaction.emoji] = [0, 0, 0, 0]
+                disreg_votes[reaction.emoji] = [0, 0, 0, 0, 0]
                 async for user in reaction.users():
                     flag_a = False
                     if user != bot.user and user in usrlib:
