@@ -595,6 +595,7 @@ async def setmention(interaction: discord.Interaction, mention: discord.Role) ->
         f"Role {mention} has been set to be mentioned.", ephemeral=True
     )
 
+
 @bot.tree.command(name="pinops", description="Pin operations.")
 @app_commands.checks.has_any_role(465888032537444353, config.owner_role)
 @app_commands.describe(pind="ID of the message to be pinned/unpinned.")
