@@ -280,6 +280,14 @@ async def override(ctx,
             logging.info("Rebooting with production mode...")
             await ctx.send("Debug mode enabling...")
             await bot.close()
+        elif command == "pin":
+            await ctx.send("Pinning...")
+            msg = await ctx.channel.fetch_message(arg)
+            await msg.pin()
+        elif command == "unpin":
+            await ctx.send("Unpinning...")
+            msg = await ctx.channel.fetch_message(arg)
+            await msg.unpin()
     else:
         await ctx.send("No permissions")
         await ctx.message.delete()
