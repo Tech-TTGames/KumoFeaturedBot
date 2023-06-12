@@ -598,8 +598,14 @@ async def setmention(interaction: discord.Interaction, mention: discord.Role) ->
 @bot.tree.command(name="pinops", description="Pin operations.")
 @app_commands.checks.has_any_role(465888032537444353, config.owner_role)
 @app_commands.describe(pind="ID of the message to be pinned/unpinned.")
-async def pinops(interaction: discord.Interaction, pind: int) -> None:
+async def pinops(interaction: discord.Interaction, pind: str) -> None:
     """Pins or unpins a message."""
+    if not pind.isdigit():
+        await interaction.response.send_message(
+            f"Message ID must be a number.", ephemeral=True
+        )
+        return
+    pind = int(pind)
     msg = await interaction.channel.fetch_message(pind)
     if msg.pinned:
         await msg.unpin()
