@@ -568,14 +568,6 @@ async def override(interaction: discord.Interaction, command: str) -> None:
         await interaction.followup.send("Debug mode enabling...")
         await bot.close()
 
-        elif command == "pin":
-            await ctx.send("Pinning...")
-            msg = await ctx.channel.fetch_message(arg)
-            await msg.pin()
-        elif command == "unpin":
-            await ctx.send("Unpinning...")
-            msg = await ctx.channel.fetch_message(arg)
-            await msg.unpin()
     else:
         await interaction.followup.send("Invalid override command.")
 
@@ -602,6 +594,23 @@ async def setmention(interaction: discord.Interaction, mention: discord.Role) ->
     await interaction.response.send_message(
         f"Role {mention} has been set to be mentioned.", ephemeral=True
     )
+
+@bot.tree.command(name="pinops", description="Pin operations.")
+@app_commands.checks.has_any_role(465888032537444353, config.owner_role)
+@app_commands.describe(pind="ID of the message to be pinned/unpinned.")
+async def pinops(interaction: discord.Interaction, pind: int) -> None:
+    """Pins or unpins a message."""
+    msg = await interaction.channel.fetch_message(pind)
+    if msg.pinned:
+        await msg.unpin()
+        await interaction.response.send_message(
+            f"Message {pind} has been unpinned.", ephemeral=True
+        )
+    else:
+        await msg.pin()
+        await interaction.response.send_message(
+            f"Message {pind} has been pinned.", ephemeral=True
+        )
 
 
 @bot.command()
