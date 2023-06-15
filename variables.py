@@ -254,3 +254,16 @@ class Config:
             return self._config["owner_role"]
         except KeyError:
             return "Administator"
+
+    @property
+    def vote_count_mode(self) -> int:
+        """Gets vote count mode"""
+        try:
+            return self._config["vote_count_mode"]
+        except KeyError:
+            return 0
+
+    @vote_count_mode.setter
+    def vote_count_mode(self, mode: int) -> None:
+        self._config["vote_count_mode"] = mode
+        self.update()

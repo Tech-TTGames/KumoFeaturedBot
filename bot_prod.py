@@ -7,7 +7,7 @@ import logging
 import os
 import re
 from copy import deepcopy
-from random import choice, shuffle
+from random import choice, shuffle, randint
 from typing import Dict, List, Union
 
 import discord
@@ -305,6 +305,9 @@ async def endvote_internal(interaction: discord.Interaction) -> None:
     disregarded: List[Union[discord.Member, discord.User]] = []
     disreg_votes: Dict[str, List[int]] = {}
     disreg_total: int = 0
+    disreg_reqs: int = 5
+    if config.vote_count_mode == 2:
+        disreg_reqs = randint(5, 10)
     role = config.mention
 
     if interaction != "INTERNAL":
@@ -336,10 +339,16 @@ async def endvote_internal(interaction: discord.Interaction) -> None:
             for line in votemsg.content.splitlines():
                 if " - " in line:
                     submitted.append(line.split(" - ")[1].lstrip("<").rstrip(">"))
-        timed = discord.utils.utcnow() - datetime.timedelta(days=31)
+
+        start_time = votemsg.created_at
+        if config.vote_count_mode == 1:
+            logging.info("Using legacy message count mode.")
+            start_time = discord.utils.utcnow()
+        timed = start_time - datetime.timedelta(days=31)
+
 
         async for message in channel.history(
-            after=timed, oldest_first=True, limit=None
+            after=timed, before=start_time, oldest_first=True, limit=None
         ):
             if (
                 message.author not in usrlib
@@ -356,12 +365,12 @@ async def endvote_internal(interaction: discord.Interaction) -> None:
                 reaction.emoji
             ) < len(submitted):
                 vote[reaction.emoji] = 0
-                disreg_votes[reaction.emoji] = [0, 0, 0, 0, 0]
+                disreg_votes[reaction.emoji] = [0] * disreg_reqs
                 async for user in reaction.users():
                     flag_a = False
                     if user != bot.user and user in usrlib:
                         # Splitting up the if statement to avoid KeyErro
-                        if usrlib[user] >= 5:
+                        if usrlib[user] >= disreg_reqs:
                             vote[reaction.emoji] += 1
                         else:
                             flag_a = True
@@ -528,6 +537,24 @@ async def blacklist(interaction: discord.Interaction, user: discord.User) -> Non
     config.blacklist = blacklst
 
 
+@bot.tree.command(name="votecountmode", description="Sets the vote count mode.")
+@app_commands.checks.has_any_role(config.role_id, config.owner_role)
+@app_commands.describe(mode="Vote count mode.")
+@app_commands.choices(mode=[
+    app_commands.Choice(name="Legacy (all messages)", value=1),
+    app_commands.Choice(name="Modern (messages before vote)", value=0),
+    app_commands.Choice(name="Modern+ (messages before vote, 5-19 required)", value=2)
+])
+async def votecountmode(interaction: discord.Interaction, mode: app_commands.Choice[int]) -> None:
+    """This command is used to configure the vote count mode."""
+    config.vote_count_mode = mode.value
+
+    await interaction.response.send_message(
+        f"Vote count mode set to {mode.name}.",
+        ephemeral=True,
+    )
+
+
 @bot.tree.command(name="override", description="Tech's admin commands.")
 @app_commands.describe(command="Command to use.")
 @is_owner()
@@ -603,7 +630,7 @@ async def pinops(interaction: discord.Interaction, pind: str) -> None:
     """Pins or unpins a message."""
     if not pind.isdigit():
         await interaction.response.send_message(
-            f"Message ID must be a number.", ephemeral=True
+            "Message ID must be a number.", ephemeral=True
         )
         return
     pind = int(pind)
