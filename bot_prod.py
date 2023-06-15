@@ -543,7 +543,7 @@ async def blacklist(interaction: discord.Interaction, user: discord.User) -> Non
 @app_commands.choices(mode=[
     app_commands.Choice(name="Legacy (all messages)", value=1),
     app_commands.Choice(name="Modern (messages before vote)", value=0),
-    app_commands.Choice(name="Modern+ (messages before vote, 5-19 required)", value=2)
+    app_commands.Choice(name="Modern+ (messages before vote, 5-10 required)", value=2)
 ])
 async def votecountmode(interaction: discord.Interaction, mode: app_commands.Choice[int]) -> None:
     """This command is used to configure the vote count mode."""
