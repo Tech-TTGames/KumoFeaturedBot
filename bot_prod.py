@@ -7,7 +7,7 @@ import logging
 import os
 import re
 from copy import deepcopy
-from random import choice, shuffle, randint
+from random import choice, randint, shuffle
 from typing import Dict, List, Union
 
 import discord
@@ -346,7 +346,6 @@ async def endvote_internal(interaction: discord.Interaction) -> None:
             start_time = discord.utils.utcnow()
         timed = start_time - datetime.timedelta(days=31)
 
-
         async for message in channel.history(
             after=timed, before=start_time, oldest_first=True, limit=None
         ):
@@ -540,12 +539,18 @@ async def blacklist(interaction: discord.Interaction, user: discord.User) -> Non
 @bot.tree.command(name="votecountmode", description="Sets the vote count mode.")
 @app_commands.checks.has_any_role(config.role_id, config.owner_role)
 @app_commands.describe(mode="Vote count mode.")
-@app_commands.choices(mode=[
-    app_commands.Choice(name="Legacy (all messages)", value=1),
-    app_commands.Choice(name="Modern (messages before vote)", value=0),
-    app_commands.Choice(name="Modern+ (messages before vote, 5-10 required)", value=2)
-])
-async def votecountmode(interaction: discord.Interaction, mode: app_commands.Choice[int]) -> None:
+@app_commands.choices(
+    mode=[
+        app_commands.Choice(name="Legacy (all messages)", value=1),
+        app_commands.Choice(name="Modern (messages before vote)", value=0),
+        app_commands.Choice(
+            name="Modern+ (messages before vote, 5-10 required)", value=2
+        ),
+    ]
+)
+async def votecountmode(
+    interaction: discord.Interaction, mode: app_commands.Choice[int]
+) -> None:
     """This command is used to configure the vote count mode."""
     config.vote_count_mode = mode.value
 
