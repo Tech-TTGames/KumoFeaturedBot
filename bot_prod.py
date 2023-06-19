@@ -4,8 +4,10 @@ It contains a full version of the bot's commands and events.
 import asyncio
 import datetime
 import logging
+import io
 import os
 import re
+import functools
 from copy import deepcopy
 from random import choice, randint, shuffle
 from typing import Dict, List, Union
@@ -13,6 +15,7 @@ from typing import Dict, List, Union
 import discord
 from discord import app_commands
 from discord.ext import commands
+from fanficfare import cli, loghandler
 
 from variables import EMOJI_ALPHABET, VERSION, Config, Secret, handler, intents
 
@@ -27,6 +30,10 @@ bot = commands.Bot(
 config = Config(bot)
 secret = Secret()
 bot.command_prefix = config.prefix
+handler.setLevel(logging.INFO)
+loghandler.setLevel(logging.CRITICAL)
+log_stuff = cli.logger
+log_stuff.addHandler(handler)
 
 
 def vote_running():
@@ -51,6 +58,38 @@ def is_owner():
         return True
 
     return app_commands.check(predicate)
+
+async def fetch_download(url) -> discord.File | None:
+    """Fetches a file from a url.
+
+    Args:
+        url (str): The url to fetch the file from.
+    """
+    loop = asyncio.get_event_loop()
+    string_io = io.StringIO()
+    log_handler = logging.StreamHandler(string_io)
+    log_stuff.addHandler(log_handler)
+    options, _ = cli.mkParser(calibre=False).parse_args(["--non-interactive", "--force"])
+    cli.expandOptions(options)
+    await loop.run_in_executor(
+        None,
+        functools.partial(
+        cli.dispatch,
+        options,
+        [url],
+        warn=log_stuff.warn, # type: ignore
+        fail=log_stuff.critical # type: ignore
+        )
+    )
+    logread = string_io.getvalue()
+    string_io.close()
+    log_stuff.removeHandler(log_handler)
+    log_handler.close()
+    filename = re.search(r"Successfully wrote '(.*)'", logread)
+    if filename is None:
+        return None
+    filename = filename.group(1)
+    return discord.File(fp=filename)
 
 
 @bot.event
@@ -439,6 +478,9 @@ async def endvote_internal(interaction: discord.Interaction) -> None:
         tiebreak = 2
         win_id = choice(win_candidates)
 
+    # Fetch the winner epub if possible
+    downed = await fetch_download(submitted[EMOJI_ALPHABET.index(win_id)])
+
     message_txt = (
         f"{role.mention} This week's featured results are in!\n"
         + f"The winner is {submitted[EMOJI_ALPHABET.index(win_id)]}"
@@ -450,7 +492,11 @@ async def endvote_internal(interaction: discord.Interaction) -> None:
     elif tiebreak == 2:
         message_txt += "\n\n(Tie-Break Rule 2: Random)"
 
-    message = await channel.send(message_txt)
+    if downed is None:
+        message_txt += "\n\nThe winner's epub could not be downloaded."
+        message = await channel.send(message_txt)
+    else:
+        message = await channel.send(message_txt, file=downed)
 
     await message.add_reaction("🎉")
     await message.pin()
@@ -633,13 +679,18 @@ async def setmention(interaction: discord.Interaction, mention: discord.Role) ->
 @app_commands.describe(pind="ID of the message to be pinned/unpinned.")
 async def pinops(interaction: discord.Interaction, pind: str) -> None:
     """Pins or unpins a message."""
+    if isinstance(interaction.channel, (discord.CategoryChannel, discord.ForumChannel)) or interaction.channel is None:
+        await interaction.response.send_message(
+            "This command cannot be used in this channel.", ephemeral=True
+        )
+        return
     if not pind.isdigit():
         await interaction.response.send_message(
             "Message ID must be a number.", ephemeral=True
         )
         return
-    pind = int(pind)
-    msg = await interaction.channel.fetch_message(pind)
+    pind_i = int(pind)
+    msg = await interaction.channel.fetch_message(pind_i)
     if msg.pinned:
         await msg.unpin()
         await interaction.response.send_message(
@@ -650,6 +701,19 @@ async def pinops(interaction: discord.Interaction, pind: str) -> None:
         await interaction.response.send_message(
             f"Message {pind} has been pinned.", ephemeral=True
         )
+
+
+@bot.tree.command(name="download", description="Downloads a fic.")
+@app_commands.checks.has_any_role(465888032537444353, config.owner_role)
+@app_commands.describe(url="URL of the fic to be downloaded.")
+async def download(interaction: discord.Interaction, url: str) -> None:
+    """Downloads a fic."""
+    await interaction.response.defer(thinking=True)
+    file = await fetch_download(url)
+    if file is None:
+        await interaction.followup.send("Error while downloading fic.")
+        return
+    await interaction.followup.send(file=file)
 
 
 @bot.command()
