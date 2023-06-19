@@ -3,11 +3,11 @@ It contains a full version of the bot's commands and events.
 """
 import asyncio
 import datetime
-import logging
+import functools
 import io
+import logging
 import os
 import re
-import functools
 from copy import deepcopy
 from random import choice, randint, shuffle
 from typing import Dict, List, Union
@@ -59,6 +59,7 @@ def is_owner():
 
     return app_commands.check(predicate)
 
+
 async def fetch_download(url) -> discord.File | None:
     """Fetches a file from a url.
 
@@ -69,17 +70,19 @@ async def fetch_download(url) -> discord.File | None:
     string_io = io.StringIO()
     log_handler = logging.StreamHandler(string_io)
     log_stuff.addHandler(log_handler)
-    options, _ = cli.mkParser(calibre=False).parse_args(["--non-interactive", "--force"])
+    options, _ = cli.mkParser(calibre=False).parse_args(
+        ["--non-interactive", "--force"]
+    )
     cli.expandOptions(options)
     await loop.run_in_executor(
         None,
         functools.partial(
-        cli.dispatch,
-        options,
-        [url],
-        warn=log_stuff.warn, # type: ignore
-        fail=log_stuff.critical # type: ignore
-        )
+            cli.dispatch,
+            options,
+            [url],
+            warn=log_stuff.warn,  # type: ignore
+            fail=log_stuff.critical,  # type: ignore
+        ),
     )
     logread = string_io.getvalue()
     string_io.close()
@@ -679,7 +682,10 @@ async def setmention(interaction: discord.Interaction, mention: discord.Role) ->
 @app_commands.describe(pind="ID of the message to be pinned/unpinned.")
 async def pinops(interaction: discord.Interaction, pind: str) -> None:
     """Pins or unpins a message."""
-    if isinstance(interaction.channel, (discord.CategoryChannel, discord.ForumChannel)) or interaction.channel is None:
+    if (
+        isinstance(interaction.channel, (discord.CategoryChannel, discord.ForumChannel))
+        or interaction.channel is None
+    ):
         await interaction.response.send_message(
             "This command cannot be used in this channel.", ephemeral=True
         )
