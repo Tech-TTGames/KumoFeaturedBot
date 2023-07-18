@@ -391,11 +391,9 @@ async def endvote_internal(interaction: discord.Interaction) -> None:
         async for message in channel.history(
             after=timed, before=start_time, oldest_first=True, limit=None
         ):
-            if (
-                message.author not in usrlib
-                and message.author.id not in config.blacklist
-            ):
-                usrlib[message.author] = 1
+            if message.author not in usrlib:
+                if message.author.id not in config.blacklist:
+                    usrlib[message.author] = 1
             else:
                 usrlib[message.author] += 1
         logging.debug("Submitted: %s", str(submitted))
