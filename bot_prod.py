@@ -622,7 +622,7 @@ async def override(interaction: discord.Interaction, command: str) -> None:
         await interaction.followup.send("Rebooting...")
         await bot.close()
 
-    elid command == "log":
+    elif command == "log":
         logging.info("Sending Log...")
         dir_path = os.path.dirname(os.path.realpath(__file__))
         fpath = os.path.join(dir_path, "discord.log")
