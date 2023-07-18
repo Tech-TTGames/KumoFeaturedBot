@@ -622,6 +622,13 @@ async def override(interaction: discord.Interaction, command: str) -> None:
         await interaction.followup.send("Rebooting...")
         await bot.close()
 
+    elid command == "log":
+        logging.info("Sending Log...")
+        dir_path = os.path.dirname(os.path.realpath(__file__))
+        fpath = os.path.join(dir_path, "discord.log")
+        await interaction.user.send(file=discord.File(fp=fpath))
+        await interaction.followup.send("Sent!")
+
     elif command == "pull":
         pull = await asyncio.create_subprocess_shell(
             "git pull",
