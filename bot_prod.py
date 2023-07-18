@@ -480,7 +480,10 @@ async def endvote_internal(interaction: discord.Interaction) -> None:
         win_id = choice(win_candidates)
 
     # Fetch the winner epub if possible
-    downed = await fetch_download(submitted[EMOJI_ALPHABET.index(win_id)])
+    try:
+        downed = await fetch_download(submitted[EMOJI_ALPHABET.index(win_id)])
+    except:
+        downed = None
 
     message_txt = (
         f"{role.mention} This week's featured results are in!\n"
