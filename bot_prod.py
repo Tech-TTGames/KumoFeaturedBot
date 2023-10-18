@@ -23,9 +23,8 @@ bot = commands.Bot(
     command_prefix=">",
     intents=intents,
     status=discord.Status.online,
-    activity=discord.Activity(
-        type=discord.ActivityType.watching, name="for voter fraud."
-    ),
+    activity=discord.Activity(type=discord.ActivityType.watching,
+                              name="for voter fraud."),
 )
 config = Config(bot)
 secret = Secret()
@@ -54,7 +53,8 @@ def is_owner():
     async def predicate(ctx: discord.Interaction):
         """The predicate for the check."""
         if ctx.user.id != 414075045678284810:
-            raise app_commands.CheckFailure("You are not the owner of this bot.")
+            raise app_commands.CheckFailure(
+                "You are not the owner of this bot.")
         return True
 
     return app_commands.check(predicate)
@@ -71,8 +71,7 @@ async def fetch_download(url) -> discord.File | None:
     log_handler = logging.StreamHandler(string_io)
     log_stuff.addHandler(log_handler)
     options, _ = cli.mkParser(calibre=False).parse_args(
-        ["--non-interactive", "--force"]
-    )
+        ["--non-interactive", "--force"])
     cli.expandOptions(options)
     await loop.run_in_executor(
         None,
@@ -109,7 +108,8 @@ async def on_command_error(ctx: discord.Interaction, error):
 
     if isinstance(error, app_commands.NoPrivateMessage):
         try:
-            await ctx.user.send(f"{ctx.command} can not be used in Private Messages.")
+            await ctx.user.send(
+                f"{ctx.command} can not be used in Private Messages.")
         except discord.HTTPException:
             pass
 
@@ -125,8 +125,7 @@ async def on_command_error(ctx: discord.Interaction, error):
 
     elif isinstance(error, app_commands.MissingRole):
         await ctx.response.send_message(
-            "You are missing the role to run this command.", ephemeral=True
-        )
+            "You are missing the role to run this command.", ephemeral=True)
 
     else:
         logging.exception(
@@ -147,9 +146,6 @@ async def on_ready():
         config.armed = True
         logging.info("Resuming vote at %s", config.closetime)
         await discord.utils.sleep_until(config.closetime)
-        if not config.vote_running:
-            logging.info("Vote already closed.")
-            return
         logging.info("Closing vote via INTERNAL event.")
         await endvote_internal("INTERNAL")  # type: ignore
     config.armed = True
@@ -158,19 +154,17 @@ async def on_ready():
 @bot.tree.command(name="ping", description="Pings the bot.")
 async def ping(interaction: discord.Interaction) -> None:
     """This command is used to check if the bot is online."""
-    await interaction.response.send_message(
-        "Pong! The bot is online.\nPing: " + str(round(bot.latency * 1000)) + "ms"
-    )
+    await interaction.response.send_message("Pong! The bot is online.\nPing: " +
+                                            str(round(bot.latency * 1000)) +
+                                            "ms")
 
 
-@bot.tree.command(
-    name="version", description="Displays the current version of the bot."
-)
+@bot.tree.command(name="version",
+                  description="Displays the current version of the bot.")
 async def version(interaction: discord.Interaction) -> None:
     """This command is used to check the current version of the bot."""
     await interaction.response.send_message(
-        "KumoFeaturedBot " + VERSION + " by Tech. TTGames#8616 is running."
-    )
+        "KumoFeaturedBot " + VERSION + " by Tech. TTGames#8616 is running.")
 
 
 @bot.tree.command(name="startvote", description="Starts a vote.")
@@ -199,14 +193,12 @@ async def startvote(
     disreg_suggs = 0
 
     intchannel = interaction.channel
-    if (
-        isinstance(
+    if (isinstance(
             intchannel,
-            (discord.StageChannel, discord.ForumChannel, discord.CategoryChannel),
-        )
-        or intchannel is None
-    ):
-        raise app_commands.AppCommandError("This channel is not a text channel.")
+        (discord.StageChannel, discord.ForumChannel, discord.CategoryChannel),
+    ) or intchannel is None):
+        raise app_commands.AppCommandError(
+            "This channel is not a text channel.")
 
     winmsg = await config.lastwin
     if winmsg is not None:
@@ -217,34 +209,28 @@ async def startvote(
         await votemsg.unpin()
 
     if votemsg is not None:
-        if (
-            votemsg.embeds
-            and votemsg.embeds[0].description
-            and votemsg.embeds[0].title == "Vote"
-        ):
+        if (votemsg.embeds and votemsg.embeds[0].description and
+                votemsg.embeds[0].title == "Vote"):
             for line in votemsg.embeds[0].description.splitlines():
                 if " - " in line:
-                    submitted_old.append(line.split(" - ")[1].lstrip("<").rstrip(">"))
+                    submitted_old.append(
+                        line.split(" - ")[1].lstrip("<").rstrip(">"))
         else:
             for line in votemsg.content.splitlines():
                 if " - " in line:
-                    submitted_old.append(line.split(" - ")[1].lstrip("<").rstrip(">"))
+                    submitted_old.append(
+                        line.split(" - ")[1].lstrip("<").rstrip(">"))
 
     role = config.mention
     await interaction.response.defer(thinking=True)
     async with intchannel.typing():
         timed = discord.utils.utcnow() - datetime.timedelta(days=31)
         async for message in intchannel.history(after=timed, limit=None):
-            if (
-                message.content.startswith("https://")
-                and message.author not in submitees
-            ):
+            if (message.content.startswith("https://") and
+                    message.author not in submitees):
                 url = re.search(r"(?P<url>https?://[^\s]+)", message.content)
-                if (
-                    url not in submitted
-                    and url is not None
-                    and url not in submitted_old
-                ):
+                if (url not in submitted and url is not None and
+                        url not in submitted_old):
                     if message.author.id in config.blacklist:
                         disreg_suggs += 1
                         continue
@@ -295,10 +281,8 @@ async def startvote(
         try:
             await intchannel.purge(bulk=True)  # type: ignore
         except discord.Forbidden:
-            await intchannel.send(
-                "Error while clearing channel.\n"
-                "Missing permissions or messages too old."
-            )
+            await intchannel.send("Error while clearing channel.\n"
+                                  "Missing permissions or messages too old.")
         else:
             await intchannel.send("Channel has been cleared.", delete_after=60)
         await intchannel.send(
@@ -309,8 +293,7 @@ async def startvote(
             "all of the following suggestions will be ignored.\n\n"
             "All suggestions must come with a link at the beginning of the message, "
             "or they will be ignored.\n\n"
-            "This thread is not for conversation."
-        )
+            "This thread is not for conversation.")
 
     logging.info(
         "Vote started in %s by %s at %s",
@@ -348,6 +331,9 @@ async def endvote_internal(interaction: discord.Interaction) -> None:
     disreg_votes: Dict[str, List[int]] = {}
     disreg_total: int = 0
     disreg_reqs: int = 5
+    if not config.vote_running:
+        logging.info("Vote already closed.")
+        return
     if config.vote_count_mode == 2:
         disreg_reqs = randint(5, 10)
     role = config.mention
@@ -369,18 +355,17 @@ async def endvote_internal(interaction: discord.Interaction) -> None:
     )
 
     async with channel.typing():
-        if (
-            votemsg.embeds
-            and votemsg.embeds[0].description
-            and votemsg.embeds[0].title == "Vote"
-        ):
+        if (votemsg.embeds and votemsg.embeds[0].description and
+                votemsg.embeds[0].title == "Vote"):
             for line in votemsg.embeds[0].description.splitlines():
                 if " - " in line:
-                    submitted.append(line.split(" - ")[1].lstrip("<").rstrip(">"))
+                    submitted.append(
+                        line.split(" - ")[1].lstrip("<").rstrip(">"))
         else:
             for line in votemsg.content.splitlines():
                 if " - " in line:
-                    submitted.append(line.split(" - ")[1].lstrip("<").rstrip(">"))
+                    submitted.append(
+                        line.split(" - ")[1].lstrip("<").rstrip(">"))
 
         start_time = votemsg.created_at
         if config.vote_count_mode == 1:
@@ -388,9 +373,10 @@ async def endvote_internal(interaction: discord.Interaction) -> None:
             start_time = discord.utils.utcnow()
         timed = start_time - datetime.timedelta(days=31)
 
-        async for message in channel.history(
-            after=timed, before=start_time, oldest_first=True, limit=None
-        ):
+        async for message in channel.history(after=timed,
+                                             before=start_time,
+                                             oldest_first=True,
+                                             limit=None):
             if message.author not in usrlib:
                 if message.author.id not in config.blacklist:
                     usrlib[message.author] = 1
@@ -401,8 +387,7 @@ async def endvote_internal(interaction: discord.Interaction) -> None:
 
         for reaction in votemsg.reactions:
             if reaction.emoji in EMOJI_ALPHABET and EMOJI_ALPHABET.index(
-                reaction.emoji
-            ) < len(submitted):
+                    reaction.emoji) < len(submitted):
                 vote[reaction.emoji] = 0
                 disreg_votes[reaction.emoji] = [0] * disreg_reqs
                 async for user in reaction.users():
@@ -430,14 +415,16 @@ async def endvote_internal(interaction: discord.Interaction) -> None:
 
     msg_text = "This week's featured results are:\n"
     for i in range(len(vote)):
-        msg_text += (
-            f"{EMOJI_ALPHABET[i]} - {vote[EMOJI_ALPHABET[i]]} vote"
-            + f"{'s'[:vote[EMOJI_ALPHABET[i]]^1]}\n"
-        )
+        msg_text += (f"{EMOJI_ALPHABET[i]} - {vote[EMOJI_ALPHABET[i]]} vote" +
+                     f"{'s'[:vote[EMOJI_ALPHABET[i]]^1]}\n")
 
     # Create an embed message with the voting results and send it to the channel
-    results_embed = discord.Embed(title="RESULTS", description=msg_text, color=0x00FF00)
-    await channel.send(embed=results_embed, reference=votemsg, mention_author=False)
+    results_embed = discord.Embed(title="RESULTS",
+                                  description=msg_text,
+                                  color=0x00FF00)
+    await channel.send(embed=results_embed,
+                       reference=votemsg,
+                       mention_author=False)
 
     # Determine the candidate with the highest number of votes
     max_vote = max(vote.values())
@@ -485,11 +472,9 @@ async def endvote_internal(interaction: discord.Interaction) -> None:
     except:
         downed = None
 
-    message_txt = (
-        f"{role.mention} This week's featured results are in!\n"
-        + f"The winner is {submitted[EMOJI_ALPHABET.index(win_id)]}"
-        + f" with {vote[win_id]} vote{'s'[:vote[win_id]^1]}!"
-    )
+    message_txt = (f"{role.mention} This week's featured results are in!\n" +
+                   f"The winner is {submitted[EMOJI_ALPHABET.index(win_id)]}" +
+                   f" with {vote[win_id]} vote{'s'[:vote[win_id]^1]}!")
 
     if tiebreak == 1:
         message_txt += "\n\n(Tie-Break Rule 1: Highest disregarded votes)"
@@ -506,11 +491,9 @@ async def endvote_internal(interaction: discord.Interaction) -> None:
     await message.pin()
 
     if disregarded:
-        fraport_text = (
-            f"Total disregarded votes: {disreg_total}\n"
-            + f"Total disregarded users: {len(disregarded)}\n"
-            + "Disregarded users:\n"
-        )
+        fraport_text = (f"Total disregarded votes: {disreg_total}\n" +
+                        f"Total disregarded users: {len(disregarded)}\n" +
+                        "Disregarded users:\n")
         for usr in disregarded:
             if usr in usrlib:
                 fraport_text += (
@@ -520,9 +503,9 @@ async def endvote_internal(interaction: discord.Interaction) -> None:
                 fraport_text += f"{usr.mention} - Blacklisted\n"
             else:
                 fraport_text += f"{usr.mention} - 0 messages\n"
-        fraprot = discord.Embed(
-            title="Fraud Protection Log", description=fraport_text, color=0xFC0303
-        )
+        fraprot = discord.Embed(title="Fraud Protection Log",
+                                description=fraport_text,
+                                color=0xFC0303)
         fraprot.set_footer(text="This is a public safety announcement.")
 
     else:
@@ -570,37 +553,32 @@ async def autoclose(interaction: discord.Interaction, time: int = 24) -> None:
 
 @bot.tree.command(name="blacklist", description="Blacklists a user.")
 @app_commands.checks.has_any_role(config.role_id, config.owner_role)
-async def blacklist(interaction: discord.Interaction, user: discord.User) -> None:
+async def blacklist(interaction: discord.Interaction,
+                    user: discord.User) -> None:
     """This command is used to blacklist a user from voting."""
     blacklst = config.blacklist
     if user.id in blacklst:
         blacklst.remove(user.id)
         await interaction.response.send_message(
-            f"User {user.mention} unblacklisted.", ephemeral=True
-        )
+            f"User {user.mention} unblacklisted.", ephemeral=True)
     else:
         blacklst.append(user.id)
         await interaction.response.send_message(
-            f"User {user.mention} blacklisted.", ephemeral=True
-        )
+            f"User {user.mention} blacklisted.", ephemeral=True)
     config.blacklist = blacklst
 
 
 @bot.tree.command(name="votecountmode", description="Sets the vote count mode.")
 @app_commands.checks.has_any_role(config.role_id, config.owner_role)
 @app_commands.describe(mode="Vote count mode.")
-@app_commands.choices(
-    mode=[
-        app_commands.Choice(name="Legacy (all messages)", value=1),
-        app_commands.Choice(name="Modern (messages before vote)", value=0),
-        app_commands.Choice(
-            name="Modern+ (messages before vote, 5-10 required)", value=2
-        ),
-    ]
-)
-async def votecountmode(
-    interaction: discord.Interaction, mode: app_commands.Choice[int]
-) -> None:
+@app_commands.choices(mode=[
+    app_commands.Choice(name="Legacy (all messages)", value=1),
+    app_commands.Choice(name="Modern (messages before vote)", value=0),
+    app_commands.Choice(name="Modern+ (messages before vote, 5-10 required)",
+                        value=2),
+])
+async def votecountmode(interaction: discord.Interaction,
+                        mode: app_commands.Choice[int]) -> None:
     """This command is used to configure the vote count mode."""
     config.vote_count_mode = mode.value
 
@@ -664,25 +642,25 @@ async def override(interaction: discord.Interaction, command: str) -> None:
 @bot.tree.command(name="accessrole", description="Sets botrole.")
 @app_commands.checks.has_any_role(465888032537444353, config.owner_role)
 @app_commands.describe(addrole="Role to be set as botrole.")
-async def accessrole(interaction: discord.Interaction, addrole: discord.Role) -> None:
+async def accessrole(interaction: discord.Interaction,
+                     addrole: discord.Role) -> None:
     """Sets the <addrole> as the bot role."""
     config.role = addrole
 
     await interaction.response.send_message(
-        f"Role {addrole} has been set as to have access.", ephemeral=True
-    )
+        f"Role {addrole} has been set as to have access.", ephemeral=True)
 
 
 @bot.tree.command(name="setmention", description="Sets mention.")
 @app_commands.checks.has_any_role(465888032537444353, config.owner_role)
 @app_commands.describe(mention="Role to be set as mention.")
-async def setmention(interaction: discord.Interaction, mention: discord.Role) -> None:
+async def setmention(interaction: discord.Interaction,
+                     mention: discord.Role) -> None:
     """Sets the <mention> as the mention."""
     config.mention = mention
 
     await interaction.response.send_message(
-        f"Role {mention} has been set to be mentioned.", ephemeral=True
-    )
+        f"Role {mention} has been set to be mentioned.", ephemeral=True)
 
 
 @bot.tree.command(name="pinops", description="Pin operations.")
@@ -690,31 +668,26 @@ async def setmention(interaction: discord.Interaction, mention: discord.Role) ->
 @app_commands.describe(pind="ID of the message to be pinned/unpinned.")
 async def pinops(interaction: discord.Interaction, pind: str) -> None:
     """Pins or unpins a message."""
-    if (
-        isinstance(interaction.channel, (discord.CategoryChannel, discord.ForumChannel))
-        or interaction.channel is None
-    ):
+    if (isinstance(interaction.channel,
+                   (discord.CategoryChannel, discord.ForumChannel)) or
+            interaction.channel is None):
         await interaction.response.send_message(
-            "This command cannot be used in this channel.", ephemeral=True
-        )
+            "This command cannot be used in this channel.", ephemeral=True)
         return
     if not pind.isdigit():
-        await interaction.response.send_message(
-            "Message ID must be a number.", ephemeral=True
-        )
+        await interaction.response.send_message("Message ID must be a number.",
+                                                ephemeral=True)
         return
     pind_i = int(pind)
     msg = await interaction.channel.fetch_message(pind_i)
     if msg.pinned:
         await msg.unpin()
         await interaction.response.send_message(
-            f"Message {pind} has been unpinned.", ephemeral=True
-        )
+            f"Message {pind} has been unpinned.", ephemeral=True)
     else:
         await msg.pin()
         await interaction.response.send_message(
-            f"Message {pind} has been pinned.", ephemeral=True
-        )
+            f"Message {pind} has been pinned.", ephemeral=True)
 
 
 @bot.tree.command(name="download", description="Downloads a fic.")
