@@ -20,7 +20,7 @@ from fanficfare import cli, loghandler
 from variables import EMOJI_ALPHABET, VERSION, Config, Secret, handler, intents
 
 bot = commands.Bot(
-    command_prefix=">",
+    command_prefix=commands.when_mentioned,
     intents=intents,
     status=discord.Status.online,
     activity=discord.Activity(type=discord.ActivityType.watching,
