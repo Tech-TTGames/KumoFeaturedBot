@@ -1,2 +1,2 @@
 discord.py==2.3.2
-fanficfare~=4.28.0
+fanficfare~=4.29.0
