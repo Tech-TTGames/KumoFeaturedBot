@@ -33,10 +33,12 @@ handler.setLevel(logging.INFO)
 loghandler.setLevel(logging.CRITICAL)
 log_stuff = cli.logger
 log_stuff.addHandler(handler)
+INVALID_CHANNEL_LIKES = (discord.StageChannel, discord.ForumChannel,
+                         discord.CategoryChannel)
 
 
 def vote_running():
-    """Returns wether a vote is running."""
+    """Returns whether a vote is running."""
 
     async def predicate(ctx: discord.Interaction):
         """The predicate for the check."""
@@ -48,7 +50,7 @@ def vote_running():
 
 
 def is_owner():
-    """Returns wether the user is the owner of the bot."""
+    """Returns whether the user is the owner of the bot."""
 
     async def predicate(ctx: discord.Interaction):
         """The predicate for the check."""
@@ -61,7 +63,7 @@ def is_owner():
 
 
 async def fetch_download(url) -> discord.File | None:
-    """Fetches a file from a url.
+    """Fetches a file from an url.
 
     Args:
         url (str): The url to fetch the file from.
@@ -94,6 +96,23 @@ async def fetch_download(url) -> discord.File | None:
     return discord.File(fp=filename)
 
 
+def parse_votemsg(votemsg: discord.Message) -> list[str]:
+    """Parses the previous vote messages into a list of all submissions."""
+    all_competitors = []
+    if (votemsg.embeds and votemsg.embeds[0].description and
+            votemsg.embeds[0].title == "Vote"):
+        for line in votemsg.embeds[0].description.splitlines():
+            if " - " in line:
+                all_competitors.append(
+                    line.split(" - ")[1].lstrip("<").rstrip(">"))
+    else:
+        for line in votemsg.content.splitlines():
+            if " - " in line:
+                all_competitors.append(
+                    line.split(" - ")[1].lstrip("<").rstrip(">"))
+    return all_competitors
+
+
 @bot.event
 async def on_command_error(ctx: discord.Interaction, error):
     """The event triggered when an error is raised while invoking a command."""
@@ -113,7 +132,7 @@ async def on_command_error(ctx: discord.Interaction, error):
         except discord.HTTPException:
             pass
 
-    elif isinstance(error, (app_commands.CheckFailure)):
+    elif isinstance(error, app_commands.CheckFailure):
         await ctx.response.send_message(error, ephemeral=True)
 
     elif isinstance(error, app_commands.BotMissingPermissions):
@@ -193,10 +212,7 @@ async def startvote(
     disreg_suggs = 0
 
     intchannel = interaction.channel
-    if (isinstance(
-            intchannel,
-        (discord.StageChannel, discord.ForumChannel, discord.CategoryChannel),
-    ) or intchannel is None):
+    if isinstance(intchannel, INVALID_CHANNEL_LIKES) or intchannel is None:
         raise app_commands.AppCommandError(
             "This channel is not a text channel.")
 
@@ -209,17 +225,7 @@ async def startvote(
         await votemsg.unpin()
 
     if votemsg is not None:
-        if (votemsg.embeds and votemsg.embeds[0].description and
-                votemsg.embeds[0].title == "Vote"):
-            for line in votemsg.embeds[0].description.splitlines():
-                if " - " in line:
-                    submitted_old.append(
-                        line.split(" - ")[1].lstrip("<").rstrip(">"))
-        else:
-            for line in votemsg.content.splitlines():
-                if " - " in line:
-                    submitted_old.append(
-                        line.split(" - ")[1].lstrip("<").rstrip(">"))
+        submitted_old = parse_votemsg(votemsg)
 
     role = config.mention
     await interaction.response.defer(thinking=True)
@@ -228,7 +234,7 @@ async def startvote(
         async for message in intchannel.history(after=timed, limit=None):
             if (message.content.startswith("https://") and
                     message.author not in submitees):
-                url = re.search(r"(?P<url>https?://[^\s]+)", message.content)
+                url = re.search(r"(?P<url>https?://\S+)", message.content)
                 if (url not in submitted and url is not None and
                         url not in submitted_old):
                     if message.author.id in config.blacklist:
@@ -252,7 +258,7 @@ async def startvote(
     if len(submitted) > cap:
         await intchannel.send(
             f"Vote capped at {cap} submissions."
-            f" {len(submitted)-cap} submissions dismissed.",
+            f" {len(submitted) - cap} submissions dismissed.",
             delete_after=60,
         )
         submitted = submitted[:cap]
@@ -279,7 +285,7 @@ async def startvote(
     if clear:
         await intchannel.send("Clearing channel...", delete_after=60)
         try:
-            await intchannel.purge(bulk=True)  # type: ignore
+            await intchannel.purge()
         except discord.Forbidden:
             await intchannel.send("Error while clearing channel.\n"
                                   "Missing permissions or messages too old.")
@@ -308,7 +314,7 @@ async def startvote(
         config.closetime = timed
         logging.info("Vote will close at %s", str(timed))
         await discord.utils.sleep_until(timed)
-        logging.info("Closing vote in %s due to polltime end.", str(cha))
+        logging.info("Closing vote in %s due to poll-time end.", str(cha))
         await endvote_internal("INTERNAL")  # type: ignore
 
 
@@ -324,7 +330,6 @@ async def endvote(interaction: discord.Interaction) -> None:
 async def endvote_internal(interaction: discord.Interaction) -> None:
     """This command is used to end a vote."""
     channel = config.channel
-    submitted: List[str] = []
     vote: Dict[str, int] = {}
     usrlib: Dict[Union[discord.Member, discord.User], int] = {}
     disregarded: List[Union[discord.Member, discord.User]] = []
@@ -355,17 +360,7 @@ async def endvote_internal(interaction: discord.Interaction) -> None:
     )
 
     async with channel.typing():
-        if (votemsg.embeds and votemsg.embeds[0].description and
-                votemsg.embeds[0].title == "Vote"):
-            for line in votemsg.embeds[0].description.splitlines():
-                if " - " in line:
-                    submitted.append(
-                        line.split(" - ")[1].lstrip("<").rstrip(">"))
-        else:
-            for line in votemsg.content.splitlines():
-                if " - " in line:
-                    submitted.append(
-                        line.split(" - ")[1].lstrip("<").rstrip(">"))
+        submitted = parse_votemsg(votemsg)
 
         start_time = votemsg.created_at
         if config.vote_count_mode == 1:
@@ -393,7 +388,7 @@ async def endvote_internal(interaction: discord.Interaction) -> None:
                 async for user in reaction.users():
                     flag_a = False
                     if user != bot.user and user in usrlib:
-                        # Splitting up the if statement to avoid KeyErro
+                        # Splitting up the if statement to avoid KeyError
                         if usrlib[user] >= disreg_reqs:
                             vote[reaction.emoji] += 1
                         else:
@@ -416,7 +411,7 @@ async def endvote_internal(interaction: discord.Interaction) -> None:
     msg_text = "This week's featured results are:\n"
     for i in range(len(vote)):
         msg_text += (f"{EMOJI_ALPHABET[i]} - {vote[EMOJI_ALPHABET[i]]} vote" +
-                     f"{'s'[:vote[EMOJI_ALPHABET[i]]^1]}\n")
+                     f"{'s'[:vote[EMOJI_ALPHABET[i]] ^ 1]}\n")
 
     # Create an embed message with the voting results and send it to the channel
     results_embed = discord.Embed(title="RESULTS",
@@ -469,12 +464,14 @@ async def endvote_internal(interaction: discord.Interaction) -> None:
     # Fetch the winner epub if possible
     try:
         downed = await fetch_download(submitted[EMOJI_ALPHABET.index(win_id)])
-    except:
+    except Exception as e:
+        logging.warning(f"Failed to download winner. {e.args} Error Stack:\n",
+                        exc_info=True)
         downed = None
 
     message_txt = (f"{role.mention} This week's featured results are in!\n" +
                    f"The winner is {submitted[EMOJI_ALPHABET.index(win_id)]}" +
-                   f" with {vote[win_id]} vote{'s'[:vote[win_id]^1]}!")
+                   f" with {vote[win_id]} vote{'s'[:vote[win_id] ^ 1]}!")
 
     if tiebreak == 1:
         message_txt += "\n\n(Tie-Break Rule 1: Highest disregarded votes)"
@@ -497,7 +494,7 @@ async def endvote_internal(interaction: discord.Interaction) -> None:
         for usr in disregarded:
             if usr in usrlib:
                 fraport_text += (
-                    f"{usr.mention} - {usrlib[usr]} message{'s'[:usrlib[usr]^1]}\n"
+                    f"{usr.mention} - {usrlib[usr]} message{'s'[:usrlib[usr] ^ 1]}\n"
                 )
             elif usr.id in config.blacklist:
                 fraport_text += f"{usr.mention} - Blacklisted\n"
