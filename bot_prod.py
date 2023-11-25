@@ -465,7 +465,7 @@ async def endvote_internal(interaction: discord.Interaction) -> None:
     try:
         downed = await fetch_download(submitted[EMOJI_ALPHABET.index(win_id)])
     except Exception as e:
-        logging.warning(f"Failed to download winner. {e.args} Error Stack:\n",
+        logging.warning("Failed to download winner. %s Error Stack:\n", e,
                         exc_info=True)
         downed = None
 
