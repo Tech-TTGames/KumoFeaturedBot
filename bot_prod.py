@@ -192,19 +192,19 @@ async def version(interaction: discord.Interaction) -> None:
 @app_commands.describe(
     cha="The channel to start the vote in.",
     polltime="Time to close the vote after in hours.",
+    cap="Max submissions to vote on.",
     clear="Clear channel after vote? (True/False)",
     presend="Send message links before vote? (True/False)",
-    cap="Max submissions to vote on.",
+    allow_duplicates="Allow multiple submissions from the same user? (True/False)",
 )
 @app_commands.rename(cha="channel")
-async def startvote(
-    interaction: discord.Interaction,
-    cha: discord.TextChannel,
-    polltime: int = 0,
-    clear: bool = False,
-    presend: bool = False,
-    cap: int = 8,
-) -> None:
+async def startvote(interaction: discord.Interaction,
+                    cha: discord.TextChannel,
+                    polltime: int = 0,
+                    cap: int = 8,
+                    clear: bool = False,
+                    presend: bool = False,
+                    allow_duplicates: bool = False) -> None:
     """This command is used to start a vote."""
     submitted = []
     submitted_old = []
@@ -232,8 +232,8 @@ async def startvote(
     async with intchannel.typing():
         timed = discord.utils.utcnow() - datetime.timedelta(days=31)
         async for message in intchannel.history(after=timed, limit=None):
-            if (message.content.startswith("https://") and
-                    message.author not in submitees):
+            if message.content.startswith("https://") and (
+                    message.author not in submitees or allow_duplicates):
                 url = re.search(r"(?P<url>https?://\S+)", message.content)
                 if (url not in submitted and url is not None and
                         url not in submitted_old):
