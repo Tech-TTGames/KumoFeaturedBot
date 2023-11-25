@@ -8,7 +8,7 @@ import discord
 from discord.ext import commands
 
 # v[major].[minor].[release].[build]
-VERSION = "v1.1.0.1"
+VERSION = "v1.1.0.2"
 EMOJI_ALPHABET = [
     "\U0001F1E6",
     "\U0001F1E7",
@@ -52,7 +52,7 @@ class Secret:
 
     def __init__(self) -> None:
         self._file = "secret.json"
-        with open(self._file, encoding="utf-8", mode="r") as secret_f:
+        with open(self._file, encoding="utf-8") as secret_f:
             self._secret = json.load(secret_f)
         self.token = self._secret["token"]
 
@@ -64,12 +64,12 @@ class Secret:
 
 
 class Config:
-    """Class for convinient config access"""
+    """Class for convenient config access"""
 
     def __init__(self, bot: commands.Bot) -> None:
         self._file = "config.json"
         self.armed = False
-        with open(self._file, encoding="utf-8", mode="r") as config_f:
+        with open(self._file, encoding="utf-8") as config_f:
             self._config = json.load(config_f)
         self._bt = bot
         self.closetime_timestamp = self._config["closetime"]
@@ -253,7 +253,7 @@ class Config:
         try:
             return self._config["owner_role"]
         except KeyError:
-            return "Administator"
+            return "Administrator"
 
     @property
     def vote_count_mode(self) -> int:
