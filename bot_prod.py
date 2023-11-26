@@ -6,6 +6,8 @@ import datetime
 import logging
 import os
 import re
+import functools
+import io
 from copy import deepcopy
 from random import choice, randint, shuffle
 from typing import Dict, List, Union
@@ -16,6 +18,7 @@ from discord import app_commands
 from discord.ext import commands
 from lncrawl.core import app, sources, proxy
 from lncrawl.binders import available_formats
+from fanficfare import cli, loghandler
 
 from variables import EMOJI_ALPHABET, VERSION, Config, Secret, handler, intents
 
@@ -30,6 +33,9 @@ config = Config(bot)
 secret = Secret()
 bot.command_prefix = config.prefix
 handler.setLevel(logging.INFO)
+loghandler.setLevel(logging.CRITICAL)
+log_stuff = cli.logger
+log_stuff.addHandler(handler)
 sources.load_sources()
 application = app.App()
 application.no_suffix_after_filename = True
@@ -74,6 +80,34 @@ async def fetch_download(url: str) -> discord.File:
         url: The url to fetch the file from.
     """
     loop = asyncio.get_event_loop()
+    string_io = io.StringIO()
+    log_handler = logging.StreamHandler(string_io)
+    log_stuff.addHandler(log_handler)
+    options, _ = cli.mkParser(calibre=False).parse_args(
+        ["--non-interactive", "--force"])
+    cli.expandOptions(options)
+    await loop.run_in_executor(
+        None,
+        functools.partial(
+            cli.dispatch,
+            options,
+            [url],
+            warn=log_stuff.warn,  # type: ignore
+            fail=log_stuff.critical,  # type: ignore
+        ),
+    )
+    logread = string_io.getvalue()
+    string_io.close()
+    log_stuff.removeHandler(log_handler)
+    log_handler.close()
+    filename = re.search(r"Successfully wrote '(.*)'", logread)
+    if filename is None:
+        return None
+    filename = filename.group(1)
+    if filename:
+        logging.info("Successfully downloaded %s", filename)
+        return discord.File(fp=filename)
+    logging.info("FanFicFare failed to download %, falling back to lightnovel-crawler!", url)
     application.user_input = url.strip()
     await loop.run_in_executor(None, application.prepare_search)
     await loop.run_in_executor(None, application.get_novel_info)
