@@ -57,7 +57,7 @@ async def override(
     ctx, command: str = commands.parameter(default=None, description="Command")
 ):
     """Various commands for testing."""
-    await ctx.send("Atemptting override..")
+    await ctx.send("Attempting override..")
     logging.info("Owner override triggered: %s", command)
 
     if command == "testhist":
@@ -97,7 +97,7 @@ async def override(
                     message.content.startswith("https://")
                     and message.author not in submitees
                 ):
-                    url = re.search(r"(?P<url>https?://[^\s]+)", message.content)
+                    url = re.search(r"(?P<url>https?://\S+)", message.content)
                     if url not in submitted and url is not None:
                         submitted.append(str(url.group("url")))
                         submitees.append(message.author)
