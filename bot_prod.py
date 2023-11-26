@@ -3,19 +3,19 @@ It contains a full version of the bot's commands and events.
 """
 import asyncio
 import datetime
-import functools
-import io
 import logging
 import os
 import re
 from copy import deepcopy
 from random import choice, randint, shuffle
 from typing import Dict, List, Union
+from requests import get
 
 import discord
 from discord import app_commands
 from discord.ext import commands
-from fanficfare import cli, loghandler
+from lncrawl.core import app, sources, proxy
+from lncrawl.binders import available_formats
 
 from variables import EMOJI_ALPHABET, VERSION, Config, Secret, handler, intents
 
@@ -30,9 +30,14 @@ config = Config(bot)
 secret = Secret()
 bot.command_prefix = config.prefix
 handler.setLevel(logging.INFO)
-loghandler.setLevel(logging.CRITICAL)
-log_stuff = cli.logger
-log_stuff.addHandler(handler)
+sources.load_sources()
+application = app.App()
+application.no_suffix_after_filename = True
+application.output_formats = {
+    x: (x in ["epub", "json"])
+    for x in available_formats
+}
+application.initialize()
 INVALID_CHANNEL_LIKES = (discord.StageChannel, discord.ForumChannel,
                          discord.CategoryChannel)
 
@@ -62,45 +67,39 @@ def is_owner():
     return app_commands.check(predicate)
 
 
-async def fetch_download(url) -> discord.File | None:
+async def fetch_download(url: str) -> discord.File:
     """Fetches a file from an url.
 
     Args:
-        url (str): The url to fetch the file from.
+        url: The url to fetch the file from.
     """
     loop = asyncio.get_event_loop()
-    string_io = io.StringIO()
-    log_handler = logging.StreamHandler(string_io)
-    log_stuff.addHandler(log_handler)
-    options, _ = cli.mkParser(calibre=False).parse_args(
-        ["--non-interactive", "--force"])
-    cli.expandOptions(options)
-    await loop.run_in_executor(
-        None,
-        functools.partial(
-            cli.dispatch,
-            options,
-            [url],
-            warn=log_stuff.warn,  # type: ignore
-            fail=log_stuff.critical,  # type: ignore
-        ),
-    )
-    logread = string_io.getvalue()
-    string_io.close()
-    log_stuff.removeHandler(log_handler)
-    log_handler.close()
-    filename = re.search(r"Successfully wrote '(.*)'", logread)
-    if filename is None:
-        return None
-    filename = filename.group(1)
-    return discord.File(fp=filename)
+    application.user_input = url.strip()
+    await loop.run_in_executor(None, application.prepare_search)
+    await loop.run_in_executor(None, application.get_novel_info)
+
+    os.makedirs(application.output_path, exist_ok=True)
+    application.chapters = application.crawler.chapters[:]
+    logging.info("Downloading cover: %s", application.crawler.novel_cover)
+    img = get(application.crawler.novel_cover)
+    open(os.path.join(application.output_path, "cover.jpg"),
+         "wb").write(img.content)
+    application.book_cover = os.path.join(application.output_path, "cover.jpg")
+
+    logging.info("Downloading chapters...")
+    await loop.run_in_executor(None, application.start_download)
+    await loop.run_in_executor(None, application.bind_books)
+    logging.info("Bound books.")
+    filepath = os.path.join(application.output_path, "epub",
+                            application.good_file_name + ".epub")
+    return discord.File(fp=filepath)
 
 
 def parse_votemsg(votemsg: discord.Message) -> list[str]:
     """Parses the previous vote messages into a list of all submissions."""
     all_competitors = []
-    if (votemsg.embeds and votemsg.embeds[0].description and
-            votemsg.embeds[0].title == "Vote"):
+    if votemsg.embeds and votemsg.embeds[0].description and votemsg.embeds[
+            0].title == "Vote":
         for line in votemsg.embeds[0].description.splitlines():
             if " - " in line:
                 all_competitors.append(
@@ -119,7 +118,7 @@ async def on_command_error(ctx: discord.Interaction, error):
     if hasattr(ctx.command, "on_error"):
         return
 
-    ignored = (app_commands.CommandNotFound,)
+    ignored = (app_commands.CommandNotFound, )
     error = getattr(error, "original", error)
 
     if isinstance(error, ignored):
@@ -173,9 +172,9 @@ async def on_ready():
 @bot.tree.command(name="ping", description="Pings the bot.")
 async def ping(interaction: discord.Interaction) -> None:
     """This command is used to check if the bot is online."""
-    await interaction.response.send_message("Pong! The bot is online.\nPing: " +
-                                            str(round(bot.latency * 1000)) +
-                                            "ms")
+    await interaction.response.send_message(
+        "Pong! The bot is online.\nPing: " + str(round(bot.latency * 1000)) +
+        "ms")
 
 
 @bot.tree.command(name="version",
@@ -195,7 +194,8 @@ async def version(interaction: discord.Interaction) -> None:
     cap="Max submissions to vote on.",
     clear="Clear channel after vote? (True/False)",
     presend="Send message links before vote? (True/False)",
-    allow_duplicates="Allow multiple submissions from the same user? (True/False)",
+    allow_duplicates=
+    "Allow multiple submissions from the same user? (True/False)",
 )
 @app_commands.rename(cha="channel")
 async def startvote(interaction: discord.Interaction,
@@ -235,8 +235,7 @@ async def startvote(interaction: discord.Interaction,
             if message.content.startswith("https://") and (
                     message.author not in submitees or allow_duplicates):
                 url = re.search(r"(?P<url>https?://\S+)", message.content)
-                if (url not in submitted and url is not None and
-                        url not in submitted_old):
+                if url not in submitted and url is not None and url not in submitted_old:
                     if message.author.id in config.blacklist:
                         disreg_suggs += 1
                         continue
@@ -464,9 +463,12 @@ async def endvote_internal(interaction: discord.Interaction) -> None:
 
     # Fetch the winner epub if possible
     try:
-        downed = await fetch_download(submitted[EMOJI_ALPHABET.index(win_id)])
+        downed = await asyncio.wait_for(fetch_download(
+            submitted[EMOJI_ALPHABET.index(win_id)]),
+                                        timeout=800)
     except Exception as e:
-        logging.warning("Failed to download winner. %s Error Stack:\n", e,
+        logging.warning("Failed to download winner. %s Error Stack:\n",
+                        e,
                         exc_info=True)
         downed = None
 
@@ -566,7 +568,8 @@ async def blacklist(interaction: discord.Interaction,
     config.blacklist = blacklst
 
 
-@bot.tree.command(name="votecountmode", description="Sets the vote count mode.")
+@bot.tree.command(name="votecountmode",
+                  description="Sets the vote count mode.")
 @app_commands.checks.has_any_role(config.role_id, config.owner_role)
 @app_commands.describe(mode="Vote count mode.")
 @app_commands.choices(mode=[
@@ -666,9 +669,8 @@ async def setmention(interaction: discord.Interaction,
 @app_commands.describe(pind="ID of the message to be pinned/unpinned.")
 async def pinops(interaction: discord.Interaction, pind: str) -> None:
     """Pins or unpins a message."""
-    if (isinstance(interaction.channel,
-                   (discord.CategoryChannel, discord.ForumChannel)) or
-            interaction.channel is None):
+    if (isinstance(interaction.channel, INVALID_CHANNEL_LIKES)
+            or interaction.channel is None):
         await interaction.response.send_message(
             "This command cannot be used in this channel.", ephemeral=True)
         return
@@ -694,7 +696,14 @@ async def pinops(interaction: discord.Interaction, pind: str) -> None:
 async def download(interaction: discord.Interaction, url: str) -> None:
     """Downloads a fic."""
     await interaction.response.defer(thinking=True)
-    file = await fetch_download(url)
+    logging.info("Downloading fic from %s", url)
+    try:
+        file = await asyncio.wait_for(fetch_download(url), timeout=800)
+    except Exception as e:
+        logging.warning("Failed to download fic. %s Error Stack:\n",
+                        e,
+                        exc_info=True)
+        file = None
     if file is None:
         await interaction.followup.send("Error while downloading fic.")
         return
@@ -716,4 +725,7 @@ def start():
 
 
 if __name__ == "__main__":
+    os.environ["use_proxy"] = "auto"
+    proxy.start_proxy_fetcher()
     start()
+    proxy.stop_proxy_fetcher()
