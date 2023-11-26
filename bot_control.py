@@ -21,7 +21,6 @@ if __name__ == "__main__":
         import bot_setup as Botlib
 
         logging.critical(
-            "Invalid or not found mode in config.json. Entering setup mode."
-        )
+            "Invalid or not found mode in config.json. Entering setup mode.")
         MODE = "setup"
     Botlib.start()

@@ -38,13 +38,14 @@ EMOJI_ALPHABET = [
     "\U0001F1FF",
 ]
 
-
 intents = discord.Intents.default()
 intents.message_content = True  # pylint: disable=assigning-non-slot
 intents.messages = True  # pylint: disable=assigning-non-slot
-handler = RotatingFileHandler(
-    filename="discord.log", encoding="utf-8", mode="w", backupCount=10, maxBytes=100000
-)
+handler = RotatingFileHandler(filename="discord.log",
+                              encoding="utf-8",
+                              mode="w",
+                              backupCount=10,
+                              maxBytes=100000)
 
 
 class Secret:
@@ -129,7 +130,8 @@ class Config:
         raise ValueError("Channel is not a text channel or thread")
 
     @channel.setter
-    def channel(self, channel: Union[discord.TextChannel, discord.Thread]) -> None:
+    def channel(self, channel: Union[discord.TextChannel,
+                                     discord.Thread]) -> None:
         self._config["channel"] = channel.id
         self.update()
 
@@ -208,7 +210,8 @@ class Config:
         try:
             if self._config["closetime"] is None:
                 return None
-            return datetime.fromtimestamp(self._config["closetime"], tz=timezone.utc)
+            return datetime.fromtimestamp(self._config["closetime"],
+                                          tz=timezone.utc)
         except KeyError:
             return None
 
