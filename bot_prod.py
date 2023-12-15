@@ -101,9 +101,8 @@ async def fetch_download(url: str) -> discord.File:
     log_stuff.removeHandler(log_handler)
     log_handler.close()
     filename = re.search(r"Successfully wrote '(.*)'", logread)
-    if filename is None:
-        return None
-    filename = filename.group(1)
+    if filename is not None:
+        filename = filename.group(1)
     if filename:
         logging.info("Successfully downloaded %s", filename)
         return discord.File(fp=filename)
@@ -499,7 +498,7 @@ async def endvote_internal(interaction: discord.Interaction) -> None:
     try:
         downed = await asyncio.wait_for(fetch_download(
             submitted[EMOJI_ALPHABET.index(win_id)]),
-                                        timeout=800)
+                                        timeout=1200)
     except Exception as e:
         logging.warning("Failed to download winner. %s Error Stack:\n",
                         e,
