@@ -411,8 +411,14 @@ async def endvote_internal(interaction: discord.Interaction) -> None:
                 usrlib[message.author] += 1
         logging.debug("Submitted: %s", str(submitted))
         logging.debug("Users: %s", str(usrlib))
-        usrlib[await votemsg.guild.fetch_member(414075045678284810)] = 11
-        usrlib[await votemsg.guild.fetch_member(150787039342755840)] = 11
+        for user in config.democracy:
+            user: discord.Member | None
+            if user is None:
+                continue
+            if user not in usrlib:
+                usrlib[user] = 11
+            else:
+                usrlib[user] += 11
         for reaction in votemsg.reactions:
             if reaction.emoji in EMOJI_ALPHABET and EMOJI_ALPHABET.index(
                     reaction.emoji) < len(submitted):
