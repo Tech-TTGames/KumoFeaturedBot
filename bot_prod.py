@@ -437,10 +437,7 @@ async def endvote_internal(interaction: discord.Interaction) -> None:
 
                     if flag_a:
                         disreg_total += 1
-                        try:
-                            usrlib_count = usrlib[user]
-                        except KeyError:
-                            usrlib_count = 0
+                        usrlib_count = usrlib.get(user, 0)
                         disreg_votes[reaction.emoji][usrlib_count] += 1
                         if user not in disregarded:
                             disregarded.append(user)
@@ -500,6 +497,52 @@ async def endvote_internal(interaction: discord.Interaction) -> None:
         tiebreak = 2
         win_id = choice(win_candidates)
 
+    if tiebreak:
+        await channel.send("Stand by for Stalemate Resolution.")
+        owner = bot.get_user(bot.owner_id)
+        dm_channel = owner.dm_channel
+        if dm_channel is None:
+            dm_channel = await owner.create_dm()
+
+        def dm_from_user(msg):
+            """Check if the message is from the user in DMs."""
+            return msg.channel == dm_channel
+
+        tiebreak_confirm = discord.Embed(
+            title="Stalemate Resolution Associate Response Required",
+            color=discord.Color.red(),
+        )
+        tiebreak_confirm.add_field(name="Current Resolution", value=f"Winner: {EMOJI_ALPHABET.index(win_id)}\n"
+                                                                    f"Method: {tiebreak}")
+        candidate_data = []
+        for candidate in win_candidates:
+            base_str = f"{EMOJI_ALPHABET}\nDISREG VOTES:"
+            for level, data in enumerate(disreg_votes[candidate]):
+                base_str += f"\n{level} - {data}"
+            candidate_data.append(base_str)
+        tiebreak_confirm.add_field(name="Candidates", value="\n".join(candidate_data))
+        tiebreak_confirm.set_footer(text="Awaiting Stalemate Resolution Associate Response...")
+        await dm_channel.send(embed=tiebreak_confirm)
+        resolution = await bot.wait_for("message", check=dm_from_user)
+        if resolution.content.lower() == "override":
+            await dm_channel.send("Overriding Resolution. Please enter override winner")
+            while True:
+                winner_override = await bot.wait_for("message", check=dm_from_user)
+                if winner_override.content in win_candidates:
+                    win_id = winner_override
+                    break
+                await dm_channel.send("Please respond with solely an emoji from win candidates.")
+            await dm_channel.send("Thank You. Please enter stalemate solution (1, 2 or 3).")
+            while True:
+                tiebreak_inf = await bot.wait_for("message", check=dm_from_user)
+                if tiebreak_inf.content.isnumeric():
+                    if int(tiebreak_inf.content) in [1, 2, 3]:
+                        tiebreak = int(tiebreak_inf.content)
+                await dm_channel.send("Please respond with solely a number between 1 and 3.")
+        else:
+            await dm_channel.send("Automatic Stalemate Resolution Confirmed.")
+        await dm_channel.send("Thank You. This concludes the Stalemate Resolution.")
+
     # Fetch the winner epub if possible
     try:
         downed = await asyncio.wait_for(fetch_download(
@@ -516,9 +559,11 @@ async def endvote_internal(interaction: discord.Interaction) -> None:
                    f" with {vote[win_id]} vote{'s'[:vote[win_id] ^ 1]}!")
 
     if tiebreak == 1:
-        message_txt += "\n\n(Tie-Break Rule 1: Highest disregarded votes)"
+        message_txt += "\n\n(Stalemate Resolution Rule 1: Highest disregarded votes)"
     elif tiebreak == 2:
-        message_txt += "\n\n(Tie-Break Rule 2: Random)"
+        message_txt += "\n\n(Stalemate Resolution Rule 2: Random)"
+    elif tiebreak == 3:
+        message_txt += "\n\n(Stalemate Resolution Rule 3: Stalemate Resolution Associate)"
 
     if downed is None:
         message_txt += "\n\nThe winner's epub could not be downloaded."
