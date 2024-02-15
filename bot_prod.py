@@ -46,6 +46,7 @@ application.output_formats = {
 application.initialize()
 INVALID_CHANNEL_LIKES = (discord.StageChannel, discord.ForumChannel,
                          discord.CategoryChannel)
+DOUBLE_CLAUSE = False
 
 
 def vote_running():
@@ -371,6 +372,11 @@ async def endvote_internal(interaction: discord.Interaction) -> None:
     if not config.vote_running:
         logging.info("Vote already closed.")
         return
+    global DOUBLE_CLAUSE
+    if DOUBLE_CLAUSE:
+        logging.info("Double closing attempted.")
+        return
+    DOUBLE_CLAUSE = True
     if config.vote_count_mode == 2:
         disreg_reqs = randint(5, 10)
     role = config.mention
@@ -610,6 +616,7 @@ async def endvote_internal(interaction: discord.Interaction) -> None:
     )
     config.lastwin = message
     config.vote_running = False
+    DOUBLE_CLAUSE = False
     config.closetime = None
     if interaction != "INTERNAL":
         await interaction.followup.send("Vote ended.", ephemeral=True)
