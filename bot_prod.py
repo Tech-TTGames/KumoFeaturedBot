@@ -522,7 +522,7 @@ async def endvote_internal(interaction: discord.Interaction) -> None:
                                                                     f"Method: {tiebreak}")
         candidate_data = []
         for candidate in win_candidates:
-            base_str = f"{EMOJI_ALPHABET}\nDISREG VOTES:"
+            base_str = f"{candidate}\nDISREG VOTES:"
             for level, data in enumerate(disreg_votes[candidate]):
                 base_str += f"\n{level} - {data}"
             candidate_data.append(base_str)
@@ -534,8 +534,8 @@ async def endvote_internal(interaction: discord.Interaction) -> None:
             await dm_channel.send("Overriding Resolution. Please enter override winner")
             while True:
                 winner_override = await bot.wait_for("message", check=dm_from_user)
-                if winner_override.content in win_candidates:
-                    win_id = winner_override
+                if winner_override.content.strip() in win_candidates:
+                    win_id = winner_override.content.strip()
                     break
                 await dm_channel.send("Please respond with solely an emoji from win candidates.")
             await dm_channel.send("Thank You. Please enter stalemate solution (1, 2 or 3).")
