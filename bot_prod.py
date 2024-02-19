@@ -505,7 +505,7 @@ async def endvote_internal(interaction: discord.Interaction) -> None:
 
     if tiebreak:
         await channel.send("Stand by for Stalemate Resolution.")
-        owner = bot.get_user(bot.owner_id)
+        owner = bot.application.owner
         dm_channel = owner.dm_channel
         if dm_channel is None:
             dm_channel = await owner.create_dm()
