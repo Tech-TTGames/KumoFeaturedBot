@@ -512,17 +512,17 @@ async def endvote_internal(interaction: discord.Interaction) -> None:
 
         def dm_from_user(msg):
             """Check if the message is from the user in DMs."""
-            return msg.channel == dm_channel
+            return msg.channel == dm_channel and msg.author == owner
 
         tiebreak_confirm = discord.Embed(
             title="Stalemate Resolution Associate Response Required",
             color=discord.Color.red(),
         )
-        tiebreak_confirm.add_field(name="Current Resolution", value=f"Winner: {EMOJI_ALPHABET.index(win_id)}\n"
+        tiebreak_confirm.add_field(name="Current Resolution", value=f"Winner: {win_id}\n"
                                                                     f"Method: {tiebreak}")
         candidate_data = []
         for candidate in win_candidates:
-            base_str = f"{candidate}\nDISREG VOTES:"
+            base_str = f"{candidate} - DISREG VOTES:"
             for level, data in enumerate(disreg_votes[candidate]):
                 base_str += f"\n{level} - {data}"
             candidate_data.append(base_str)
