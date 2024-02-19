@@ -1,3 +1,3 @@
 discord.py~=2.3.2
-lightnovel-crawler~=3.4.0
+lightnovel-crawler~=3.4.2
 fanficfare~=4.31.0
