@@ -104,7 +104,7 @@ async def fetch_download(url: str) -> discord.File:
     filename = re.search(r"Successfully wrote '(.*)'", logread)
     if filename is not None:
         filename = filename.group(1)
-    if filename:
+    if isinstance(filename, str):
         logging.info("Successfully downloaded %s", filename)
         return discord.File(fp=filename)
     logging.info("FanFicFare failed to download %, falling back to lightnovel-crawler!", url)
