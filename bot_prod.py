@@ -18,7 +18,7 @@ from discord import app_commands
 from discord.ext import commands
 from lncrawl.core import app, sources, proxy
 from lncrawl.binders import available_formats
-from fanficfare import cli, loghandler
+from fanficfare import cli, loghandler, exceptions
 
 from variables import EMOJI_ALPHABET, VERSION, Config, Secret, handler, intents
 
@@ -87,23 +87,25 @@ async def fetch_download(url: str) -> discord.File:
     options, _ = cli.mkParser(calibre=False).parse_args(
         ["--non-interactive", "--force"])
     cli.expandOptions(options)
-    await loop.run_in_executor(
-        None,
-        functools.partial(
-            cli.dispatch,
-            options,
-            [url],
-            warn=log_stuff.warn,  # type: ignore
-            fail=log_stuff.critical,  # type: ignore
-        ),
-    )
-    logread = string_io.getvalue()
-    string_io.close()
-    log_stuff.removeHandler(log_handler)
-    log_handler.close()
-    filename = re.search(r"Successfully wrote '(.*)'", logread)
-    if filename is not None:
-        filename = filename.group(1)
+    try:
+        await loop.run_in_executor(
+            None,
+            functools.partial(
+                cli.dispatch,
+                options,
+                [url],
+                warn=log_stuff.warn,  # type: ignore
+                fail=log_stuff.critical,  # type: ignore
+            ),
+        )
+    except exceptions.UnknownSite:
+        filename = None
+    else:
+        logread = string_io.getvalue()
+        string_io.close()
+        log_stuff.removeHandler(log_handler)
+        log_handler.close()
+        filename = re.search(r"Successfully wrote '(.*)'", logread).group(1)
     if isinstance(filename, str):
         logging.info("Successfully downloaded %s", filename)
         return discord.File(fp=filename)
