@@ -731,7 +731,7 @@ async def override(interaction: discord.Interaction, command: str) -> None:
     elif command == "debugties":
         config.debug_tie = not config.debug_tie
         logging.info("Debug Tie toggled: %s", config.debug_tie)
-        await interaction.followup.send("Debug Tie toggled: %s", config.debug_tie)
+        await interaction.followup.send(f"Debug Tie toggled: {config.debug_tie}")
     else:
         await interaction.followup.send("Invalid override command.")
 
