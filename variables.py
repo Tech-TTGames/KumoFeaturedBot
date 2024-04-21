@@ -258,3 +258,12 @@ class Config:
             return [self.guild.get_member(id_) for id_ in ids]
         except KeyError:
             return [None]
+
+    @property
+    def debug_tie(self) -> bool:
+        return self._config.get("debug_tie", False)
+
+    @debug_tie.setter
+    def debug_tie(self, val: bool) -> None:
+        self._config["debug_tie"] = val
+        self.update()

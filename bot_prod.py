@@ -505,7 +505,7 @@ async def endvote_internal(interaction: discord.Interaction) -> None:
         tiebreak = 2
         win_id = choice(win_candidates)
 
-    if tiebreak:
+    if tiebreak and config.debug_tie:
         await channel.send("Stand by for Stalemate Resolution.")
         owner = bot.application.owner
         dm_channel = owner.dm_channel
@@ -728,7 +728,10 @@ async def override(interaction: discord.Interaction, command: str) -> None:
         logging.info("Rebooting with debug mode...")
         await interaction.followup.send("Debug mode enabling...")
         await bot.close()
-
+    elif command == "debugties":
+        config.debug_tie = not config.debug_tie
+        logging.info("Debug Tie toggled: %s", config.debug_tie)
+        await interaction.followup.send("Debug Tie toggled: %s", config.debug_tie)
     else:
         await interaction.followup.send("Invalid override command.")
 
