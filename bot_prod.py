@@ -114,7 +114,7 @@ async def fetch_download(url: str) -> discord.File:
     if isinstance(filename, str):
         logging.info("Successfully downloaded %s", filename)
         return discord.File(fp=filename)
-    logging.info("FanFicFare failed to download %, falling back to lightnovel-crawler!", url)
+    logging.info("FanFicFare failed to download %s, falling back to lightnovel-crawler!", url)
     application.user_input = url.strip()
     await loop.run_in_executor(None, application.prepare_search)
     await loop.run_in_executor(None, application.get_novel_info)
