@@ -105,7 +105,12 @@ async def fetch_download(url: str) -> discord.File:
         string_io.close()
         log_stuff.removeHandler(log_handler)
         log_handler.close()
-        filename = re.search(r"Successfully wrote '(.*)'", logread).group(1)
+        regexed = re.search(r"Successfully wrote '(.*)'", logread)
+        if regexed:
+            filename = regexed.group(1)
+        else:
+            filename = None
+            logging.info("Failed to download. IO:\n %s", logread)
     if isinstance(filename, str):
         logging.info("Successfully downloaded %s", filename)
         return discord.File(fp=filename)
