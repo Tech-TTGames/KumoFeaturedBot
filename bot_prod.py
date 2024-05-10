@@ -85,7 +85,7 @@ async def fetch_download(url: str) -> discord.File:
     log_handler = logging.StreamHandler(string_io)
     log_stuff.addHandler(log_handler)
     options, _ = cli.mkParser(calibre=False).parse_args(
-        ["--non-interactive", "--force", "-o is_adult=true"])
+        ["--non-interactive", "--update-epub", "-o is_adult=true"])
     cli.expandOptions(options)
     try:
         await loop.run_in_executor(
