@@ -375,7 +375,7 @@ async def endvote_internal(interaction: discord.Interaction) -> None:
     disregarded: List[Union[discord.Member, discord.User]] = []
     disreg_votes: Dict[str, List[int]] = {}
     disreg_total: int = 0
-    disreg_reqs: int = 5
+    disreg_reqs: int = 15
     if not config.vote_running:
         logging.info("Vote already closed.")
         return
@@ -385,7 +385,7 @@ async def endvote_internal(interaction: discord.Interaction) -> None:
         return
     DOUBLE_CLAUSE = True
     if config.vote_count_mode == 2:
-        disreg_reqs = randint(5, 10)
+        disreg_reqs = randint(10, 25)
     role = config.mention
 
     if interaction != "INTERNAL":
@@ -673,7 +673,7 @@ async def blacklist(interaction: discord.Interaction,
 @app_commands.choices(mode=[
     app_commands.Choice(name="Legacy (all messages)", value=1),
     app_commands.Choice(name="Modern (messages before vote)", value=0),
-    app_commands.Choice(name="Modern+ (messages before vote, 5-10 required)",
+    app_commands.Choice(name="Modern+ (messages before vote, 10-25 required)",
                         value=2),
 ])
 async def votecountmode(interaction: discord.Interaction,
