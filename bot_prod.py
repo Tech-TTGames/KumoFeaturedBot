@@ -371,7 +371,7 @@ async def endvote_internal(interaction: discord.Interaction) -> None:
     """This command is used to end a vote."""
     channel = config.channel
     vote: Dict[str, int] = {}
-    usrlib: Dict[Union[discord.Member, discord.User], int] = {}
+    usrlib: Dict[Union[discord.Member, discord.User], Union[int, float]] = {}
     disregarded: List[Union[discord.Member, discord.User]] = []
     disreg_votes: Dict[str, List[int]] = {}
     disreg_total: int = 0
@@ -428,10 +428,7 @@ async def endvote_internal(interaction: discord.Interaction) -> None:
             user: discord.Member | None
             if user is None:
                 continue
-            if user not in usrlib:
-                usrlib[user] = 11
-            else:
-                usrlib[user] += 11
+            usrlib[user] = float('inf')
         for reaction in votemsg.reactions:
             if reaction.emoji in EMOJI_ALPHABET and EMOJI_ALPHABET.index(
                     reaction.emoji) < len(submitted):
@@ -439,13 +436,11 @@ async def endvote_internal(interaction: discord.Interaction) -> None:
                 disreg_votes[reaction.emoji] = [0] * disreg_reqs
                 async for user in reaction.users():
                     flag_a = False
-                    if user != bot.user and user in usrlib:
-                        # Splitting up the if statement to avoid KeyError
-                        if usrlib[user] >= disreg_reqs:
-                            vote[reaction.emoji] += 1
-                        else:
-                            flag_a = True
-                    elif user != bot.user and user.id not in config.blacklist:
+                    if user == bot.user:
+                        continue
+                    if user in usrlib and usrlib[user] >= disreg_reqs:
+                        vote[reaction.emoji] += 1
+                    else:
                         flag_a = True
 
                     if flag_a:
