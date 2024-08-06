@@ -255,11 +255,11 @@ class Config:
         """Get democracy-privileged users"""
         try:
             ids: list[int] = self._config["democracy"]
-            raw_democracy_members = [self.guild.get_member(id_) or id_ for id_ in ids]
-            democracy_members: list[discord.Member] = []
-            for member in raw_democracy_members:
-                if member is int:
-                    democracy_members.append(await self.guild.fetch_member(member))
+            democracy_members = []
+            for id_ in ids:
+                member = self.guild.get_member(id_)
+                if member is None:
+                    democracy_members.append(await self.guild.fetch_member(id_))
                 elif member is discord.Member:
                     democracy_members.append(member)
             return democracy_members
