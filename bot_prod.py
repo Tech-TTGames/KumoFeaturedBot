@@ -233,6 +233,7 @@ async def configuration(interaction: discord.Interaction) -> None:
     """This command is used to check the current configuration of the bot."""
     last_vote = await config.lastvote
     last_win = await config.lastwin
+    democracy = await config.democracy
     readable_config = discord.Embed(
         title="Current Configuration",
         colour=discord.Colour.teal(),
@@ -253,7 +254,7 @@ async def configuration(interaction: discord.Interaction) -> None:
         value="\n".join([f"<@{a}>" for a in config.blacklist])
     ).add_field(
         name="Current Democracy:tm: users",
-        value="\n".join([a.mention for a in await config.democracy])
+        value="\n".join([a.mention for a in democracy])
     )
     await interaction.response.send_message(embed=readable_config, allowed_mentions=discord.AllowedMentions.none())
 

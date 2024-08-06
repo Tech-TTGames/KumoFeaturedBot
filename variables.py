@@ -260,7 +260,7 @@ class Config:
             for member in raw_democracy_members:
                 if member is int:
                     democracy_members.append(await self.guild.fetch_member(member))
-                else:
+                elif member is discord.Member:
                     democracy_members.append(member)
             return democracy_members
         except KeyError:
