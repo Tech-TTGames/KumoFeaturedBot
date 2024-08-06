@@ -258,7 +258,7 @@ class Config:
             raw_democracy_members = [self.guild.get_member(id_) or id_ for id_ in ids]
             democracy_members: list[discord.Member] = []
             for member in raw_democracy_members:
-                if member is None:
+                if member is int:
                     democracy_members.append(await self.guild.fetch_member(member))
                 else:
                     democracy_members.append(member)
