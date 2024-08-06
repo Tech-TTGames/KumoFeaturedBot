@@ -226,6 +226,38 @@ async def version(interaction: discord.Interaction) -> None:
         "KumoFeaturedBot " + VERSION + " by Tech. TTGames#8616 is running.")
 
 
+@bot.tree.command(name="configuration",
+                  description="Displays the current configuration of the bot.")
+@commands.is_owner()
+async def configuration(interaction: discord.Interaction) -> None:
+    """This command is used to check the current configuration of the bot."""
+    last_vote = await config.lastvote
+    last_win = await config.lastwin
+    readable_config = discord.Embed(
+        title="Current Configuration",
+        colour=discord.Colour.teal(),
+        description=f"**MODE**: {config.mode}\n"
+                    f"**GUILD**: {config.guild.name}\n"
+                    f"**CHANNEL**: {config.channel.mention}\n"
+                    f"**BOT OPERATOR**: {config.role.mention}\n"
+                    f"**MENTION**: {config.mention.mention}\n"
+                    f"**LAST VOTE**: {last_vote.jump_url}\n"
+                    f"**LAST WIN**: {last_win.jump_url}\n"
+                    f"**CLOSETIME**: <t:{config.closetime}:f>\n"
+                    f"**CURRENTLY RUNNING**: {config.vote_running}\n"
+                    f"**OWNER ROLE**: <@{config.owner_role}>\n"
+                    f"**VOTE COUNT MODE**: {config.vote_count_mode}\n"
+                    f"**DEBUG TIES**: {config.debug_tie}"
+    ).add_field(
+        name="Currently Blacklisted",
+        value="\n".join([f"<@{a}>" for a in config.blacklist])
+    ).add_field(
+        name="Current Democracy:tm: users",
+        value="\n".join([f"<@{a}>" for a in config.democracy])
+    )
+    await interaction.response.send_message(embed=readable_config, allowed_mentions=discord.AllowedMentions.none())
+
+
 @bot.tree.command(name="startvote", description="Starts a vote.")
 @app_commands.guild_only()
 @app_commands.checks.has_any_role(config.role_id, config.owner_role)
@@ -235,8 +267,7 @@ async def version(interaction: discord.Interaction) -> None:
     cap="Max submissions to vote on.",
     clear="Clear channel after vote? (True/False)",
     presend="Send message links before vote? (True/False)",
-    allow_duplicates=
-    "Allow multiple submissions from the same user? (True/False)",
+    allow_duplicates="Allow multiple submissions from the same user? (True/False)",
 )
 @app_commands.rename(cha="channel")
 async def startvote(interaction: discord.Interaction,
