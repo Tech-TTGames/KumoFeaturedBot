@@ -251,13 +251,20 @@ class Config:
         self.update()
 
     @property
-    def democracy(self) -> list[discord.Member, None] | list[None]:
+    async def democracy(self) -> list[discord.Member] | list:
         """Get democracy-privileged users"""
         try:
-            ids = self._config["democracy"]
-            return [self.guild.get_member(id_) for id_ in ids]
+            ids: list[int] = self._config["democracy"]
+            raw_democracy_members = [self.guild.get_member(id_) or id_ for id_ in ids]
+            democracy_members: list[discord.Member] = []
+            for member in raw_democracy_members:
+                if member is None:
+                    democracy_members.append(await self.guild.fetch_member(member))
+                else:
+                    democracy_members.append(member)
+            return democracy_members
         except KeyError:
-            return [None]
+            return []
 
     @property
     def debug_tie(self) -> bool:

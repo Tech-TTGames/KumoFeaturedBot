@@ -245,7 +245,7 @@ async def configuration(interaction: discord.Interaction) -> None:
                     f"**LAST WIN**: {last_win.jump_url}\n"
                     f"**CLOSETIME**: <t:{config.closetime}:f>\n"
                     f"**CURRENTLY RUNNING**: {config.vote_running}\n"
-                    f"**OWNER ROLE**: <@{config.owner_role}>\n"
+                    f"**OWNER ROLE**: <@&{config.owner_role}>\n"
                     f"**VOTE COUNT MODE**: {config.vote_count_mode}\n"
                     f"**DEBUG TIES**: {config.debug_tie}"
     ).add_field(
@@ -253,7 +253,7 @@ async def configuration(interaction: discord.Interaction) -> None:
         value="\n".join([f"<@{a}>" for a in config.blacklist])
     ).add_field(
         name="Current Democracy:tm: users",
-        value="\n".join([f"<@{a}>" for a in config.democracy])
+        value="\n".join([a.mention for a in await config.democracy])
     )
     await interaction.response.send_message(embed=readable_config, allowed_mentions=discord.AllowedMentions.none())
 
@@ -455,7 +455,7 @@ async def endvote_internal(interaction: discord.Interaction) -> None:
                 usrlib[message.author] += 1
         logging.debug("Submitted: %s", str(submitted))
         logging.debug("Users: %s", str(usrlib))
-        for user in config.democracy:
+        for user in await config.democracy:
             user: discord.Member | None
             if user is None:
                 continue
