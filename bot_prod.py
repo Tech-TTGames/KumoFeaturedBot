@@ -136,20 +136,24 @@ async def fetch_download(url: str) -> discord.File:
     return discord.File(fp=filepath)
 
 
-def parse_votemsg(votemsg: discord.Message) -> list[str]:
+def parse_votemsg(votemsg: discord.Message) -> list[tuple[str, str]]:
     """Parses the previous vote messages into a list of all submissions."""
     all_competitors = []
     if votemsg.embeds and votemsg.embeds[0].description and votemsg.embeds[
             0].title == "Vote":
         for line in votemsg.embeds[0].description.splitlines():
             if " - " in line:
-                all_competitors.append(
-                    line.split(" - ")[1].lstrip("<").rstrip(">"))
+                clean = line.split(" - ")
+                uri = clean[1].lstrip("<").rstrip(">")
+                submitees = clean[2]  # We just take the actual string of this
+                all_competitors.append((uri, submitees))
     else:
         for line in votemsg.content.splitlines():
             if " - " in line:
-                all_competitors.append(
-                    line.split(" - ")[1].lstrip("<").rstrip(">"))
+                clean = line.split(" - ")
+                uri = clean[1].lstrip("<").rstrip(">")
+                submitees = clean[2]  # We just take the actual string of this
+                all_competitors.append((uri, submitees))
     return all_competitors
 
 
@@ -279,7 +283,7 @@ async def startvote(interaction: discord.Interaction,
                     presend: bool = False,
                     allow_duplicates: bool = False) -> None:
     """This command is used to start a vote."""
-    submitted = []
+    submitted = {}
     submitted_old = []
     submitees = []
     disreg_suggs = 0
@@ -308,19 +312,21 @@ async def startvote(interaction: discord.Interaction,
             if message.content.startswith("https://") and (
                     message.author not in submitees or allow_duplicates):
                 url = re.search(r"(?P<url>https?://\S+)", message.content)
-                if url not in submitted and url is not None and url not in submitted_old:
-                    if message.author.id in config.blacklist:
-                        disreg_suggs += 1
-                        continue
-                    submitted.append(str(url.group("url")))
+                if url is None or url in submitted_old or message.author.id in config.blacklist:
+                    continue
+                if url not in submitted:
+                    submitted[str(url.group("url"))] = [message.author.mention]
+                    submitees.append(message.author)
+                else:
+                    submitted[str(url.group("url"))].append(message.author.mention)
                     submitees.append(message.author)
     logging.debug("Old: %s", str(submitted_old))
     logging.debug("New: %s", str(submitted))
-    submitted = list(dict.fromkeys(submitted))  # Remove duplicates
+    submitted = list(submitted.items())  # Unpack into a list of tuples
     shuffle(submitted)
     disreg_text = ""
     if disreg_suggs > 0:
-        disreg_text = f"and {disreg_suggs} valid disregarded submission(s)"
+        disreg_text = f" and {disreg_suggs} valid disregarded submission(s)"
 
     await intchannel.send(
         f"Found {len(submitted)} valid submission(s){disreg_text}.\nPreparing Vote...",
@@ -337,9 +343,9 @@ async def startvote(interaction: discord.Interaction,
 
     vote_text = ""
     for i, sub in enumerate(submitted):
-        vote_text += f"{EMOJI_ALPHABET[i]} - <{sub}>\n"
+        vote_text += f"{EMOJI_ALPHABET[i]} - <{sub[0]}> - {", ".join(sub[1])}\n"
         if presend:
-            await cha.send(f"{EMOJI_ALPHABET[i]} {sub}")
+            await cha.send(f"{EMOJI_ALPHABET[i]} {sub[0]} - Submission: {", ".join(sub[1])}")
 
     vote_text += "\nVote by reacting to the corresponding letter."
     if polltime:
@@ -347,7 +353,8 @@ async def startvote(interaction: discord.Interaction,
         vote_text += f"\nVote will close <t:{str(round(timed.timestamp()))}:R>."
     embed = discord.Embed(title="Vote", description=vote_text, color=0x00FF00)
 
-    message = await cha.send(f"{role.mention}", embed=embed)
+    mnts = discord.AllowedMentions(users=False, everyone=False)
+    message = await cha.send(f"{role.mention}", embed=embed, allowed_mentions=mnts)
     for i in range(len(submitted)):
         await message.add_reaction(EMOJI_ALPHABET[i])
 
@@ -467,15 +474,11 @@ async def endvote_internal(interaction: discord.Interaction) -> None:
                 vote[reaction.emoji] = 0
                 disreg_votes[reaction.emoji] = [0] * disreg_reqs
                 async for user in reaction.users():
-                    flag_a = False
                     if user == bot.user:
                         continue
                     if user in usrlib and usrlib[user] >= disreg_reqs:
                         vote[reaction.emoji] += 1
                     else:
-                        flag_a = True
-
-                    if flag_a:
                         disreg_total += 1
                         usrlib_count = usrlib.get(user, 0)
                         disreg_votes[reaction.emoji][usrlib_count] += 1
@@ -585,17 +588,14 @@ async def endvote_internal(interaction: discord.Interaction) -> None:
 
     # Fetch the winner epub if possible
     try:
-        downed = await asyncio.wait_for(fetch_download(
-            submitted[EMOJI_ALPHABET.index(win_id)]),
-                                        timeout=1200)
+        downed = await asyncio.wait_for(fetch_download(submitted[EMOJI_ALPHABET.index(win_id)][0]), timeout=1200)
     except Exception as e:
-        logging.warning("Failed to download winner. %s Error Stack:\n",
-                        e,
-                        exc_info=True)
+        logging.warning("Failed to download winner. %s Error Stack:\n", e, exc_info=True)
         downed = None
 
     message_txt = (f"{role.mention} This week's featured results are in!\n" +
-                   f"The winner is {submitted[EMOJI_ALPHABET.index(win_id)]}" +
+                   f"The winner is {submitted[EMOJI_ALPHABET.index(win_id)][0]}" +
+                   f" submitted by {submitted[EMOJI_ALPHABET.index(win_id)][1]}" +
                    f" with {vote[win_id]} vote{'s'[:vote[win_id] ^ 1]}!")
 
     if tiebreak == 1:
