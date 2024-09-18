@@ -343,9 +343,9 @@ async def startvote(interaction: discord.Interaction,
 
     vote_text = ""
     for i, sub in enumerate(submitted):
-        vote_text += f"{EMOJI_ALPHABET[i]} - <{sub[0]}> - {", ".join(sub[1])}\n"
+        vote_text += f"{EMOJI_ALPHABET[i]} - <{sub[0]}> - {', '.join(sub[1])}\n"
         if presend:
-            await cha.send(f"{EMOJI_ALPHABET[i]} {sub[0]} - Submission: {", ".join(sub[1])}")
+            await cha.send(f"{EMOJI_ALPHABET[i]} {sub[0]} - Submission: {', '.join(sub[1])}")
 
     vote_text += "\nVote by reacting to the corresponding letter."
     if polltime:
