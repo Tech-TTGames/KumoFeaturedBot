@@ -666,7 +666,7 @@ async def autoclose(interaction: discord.Interaction, time: int = 24) -> None:
     config.closetime = timed
 
     await interaction.response.send_message(
-        f"Vote will close <t:{str(round(config.closetime_timestamp))}:R>.",
+        f"Vote will close <t:{str(round(config.closetime.timestamp()))}:R>.",
         ephemeral=True,
     )
     await discord.utils.sleep_until(timed)
