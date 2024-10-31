@@ -12,6 +12,7 @@ from copy import deepcopy
 from random import choice, randint, shuffle
 from typing import Dict, List, Union
 from requests import get
+from random import randint
 
 import discord
 from discord import app_commands
@@ -658,11 +659,18 @@ async def endvote_internal(interaction: discord.Interaction) -> None:
 
 @bot.tree.command(name="autoclose", description="Sets the autoclose time.")
 @app_commands.checks.has_any_role(config.role_id, config.owner_role)
-@app_commands.describe(time="Time in hours.")
+@app_commands.describe(
+    hours="Hour part of time",
+    minutes="Minutes part of time",
+)
 @vote_running()
-async def autoclose(interaction: discord.Interaction, time: int = 24) -> None:
+async def autoclose(interaction: discord.Interaction, hours: int = 0, minutes: int = 0) -> None:
     """This command is used to configure the autoclose time."""
-    timed = discord.utils.utcnow() + datetime.timedelta(hours=time)
+    if hours == 99:
+        hours = randint(1, 72)
+    if minutes > 59:
+        minutes = randint(0, 59)
+    timed = discord.utils.utcnow() + datetime.timedelta(hours=hours, minutes=minutes)
     config.closetime = timed
 
     await interaction.response.send_message(
