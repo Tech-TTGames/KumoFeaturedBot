@@ -509,30 +509,16 @@ async def endvote_internal(interaction: discord.Interaction) -> None:
 
     # If there are multiple candidates with the same number of votes, apply tie-breaking rules
     if len(win_candidates) > 1:
-        # Create a list of disregarded votes for each candidate
-        disreg_ranges = list(zip(*[disreg_votes[c] for c in win_candidates]))
-        discard_pile = []
-
-        # Apply tie-breaking rules to determine the winner
-        for batch in reversed(disreg_ranges):
-            # Make a copy of the batch to avoid modifying the original
-            tmp_set = list(deepcopy(batch))
-
-            # Remove any indices that have already been discarded in previous iterations
-            for i in discard_pile:
-                tmp_set.pop(i)
-
-            # If there is only one vote left in the batch, that candidate wins
-            if len(tmp_set) == 1:
-                win_id = win_candidates[batch.index(tmp_set[0])]
+        for i in range(disreg_reqs-1, -1, -1):
+            lvl_vals = {c: disreg_votes[c][i] for c in win_candidates}
+            cap = max(lvl_vals.values())
+            for c, v in lvl_vals.items():
+                if v != cap:
+                    win_candidates.remove(c)
+            if len(win_candidates) == 1:
+                win_id = win_candidates[0]
                 tiebreak = 1
                 break
-
-            # Sort the votes in descending order and discard any votes that are lower than highest
-            tmp_set.sort(reverse=True)
-            for i in range(1, len(tmp_set)):
-                if tmp_set[i] != tmp_set[0]:
-                    discard_pile.append(batch.index(tmp_set[i]))
     else:
         win_id = win_candidates[0]
 
