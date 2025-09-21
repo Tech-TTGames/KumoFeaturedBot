@@ -8,11 +8,9 @@ import os
 import re
 import functools
 import io
-from copy import deepcopy
 from random import choice, randint, shuffle
 from typing import Dict, List, Union
 from requests import get
-from random import randint
 
 import discord
 from discord import app_commands
@@ -44,7 +42,6 @@ application.output_formats = {
     x: (x in ["epub", "json"])
     for x in available_formats
 }
-application.initialize()
 INVALID_CHANNEL_LIKES = (discord.StageChannel, discord.ForumChannel,
                          discord.CategoryChannel)
 DOUBLE_CLAUSE = False
@@ -123,9 +120,9 @@ async def fetch_download(url: str) -> discord.File:
     os.makedirs(application.output_path, exist_ok=True)
     application.chapters = application.crawler.chapters[:]
     logging.info("Downloading cover: %s", application.crawler.novel_cover)
-    img = get(application.crawler.novel_cover)
-    open(os.path.join(application.output_path, "cover.jpg"),
-         "wb").write(img.content)
+    img = get(application.crawler.novel_cover, timeout=60)
+    with open(os.path.join(application.output_path, "cover.jpg"),"wb") as f:
+        f.write(img.content)
     application.book_cover = os.path.join(application.output_path, "cover.jpg")
 
     logging.info("Downloading chapters...")
