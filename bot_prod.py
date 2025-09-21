@@ -367,8 +367,7 @@ async def startvote(interaction: discord.Interaction,
         try:
             await intchannel.purge()
         except discord.Forbidden:
-            await intchannel.send("Error while clearing channel.\n"
-                                  "Missing permissions or messages too old.")
+            pass
         else:
             await intchannel.send("Channel has been cleared.", delete_after=60)
         await intchannel.send(
