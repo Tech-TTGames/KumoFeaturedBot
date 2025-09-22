@@ -36,10 +36,17 @@ class Config:
         with open(self._file, encoding="utf-8") as config_f:
             self._config = json.load(config_f)
         self._bt = bot
-        self.closetime_timestamp = self._config.get("closetime", None)
 
     def __dict__(self) -> dict:
         return self._config
+
+    def __getitem__(self, key):
+        return self._config[key]
+
+    def __setitem__(self, key, value):
+        if not getattr(self._bt, "debug", False):
+            raise TypeError("While not in debug mode direct assignments are not allowed.")
+        self._config[key] = value
 
     def update(self) -> None:
         """Update the config.json file to reflect changes"""

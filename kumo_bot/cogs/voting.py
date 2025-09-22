@@ -279,7 +279,7 @@ class VotingCommands(commands.Cog):
         msg_text = "This week's featured results are:\n"
         for i in range(len(vote)):
             msg_text += (f"{constants.EMOJI_ALPHABET[i]} - {vote[constants.EMOJI_ALPHABET[i]]} vote" +
-                         f"{'s'[:vote[constants.EMOJI_ALPHABET[i]] ^ 1]}\n")  # pylint: disable=inconsistent-quotes
+                         f"{voting.plurls(vote[constants.EMOJI_ALPHABET[i]])}\n")
 
         results_embed = discord.Embed(title="RESULTS", description=msg_text, color=0x00FF00)
         await channel.send(embed=results_embed, reference=votemsg, mention_author=False)
@@ -363,7 +363,7 @@ class VotingCommands(commands.Cog):
                             f"Total disregarded users: {len(disregarded)}\n" + "Disregarded users:\n")
             for usr in disregarded:
                 if usr in usrlib:
-                    fraport_text += f"{usr.mention} - {usrlib[usr]} message{'s'[:usrlib[usr] ^ 1]}\n"  # pylint: disable=inconsistent-quotes
+                    fraport_text += f"{usr.mention} - {usrlib[usr]} message{voting.plurls(usrlib[usr])}\n"
                 elif usr.id in config.blacklist:
                     fraport_text += f"{usr.mention} - Blacklisted\n"
                 else:
@@ -393,7 +393,7 @@ class VotingCommands(commands.Cog):
         message_txt = (f"{role.mention} This week's featured results are in!\n" +
                        f"The winner is {submitted[constants.EMOJI_ALPHABET.index(win_id)][0]}" +
                        f" submitted by {submitted[constants.EMOJI_ALPHABET.index(win_id)][1]}" +
-                       f" with {vote[win_id]} vote{'s'[:vote[win_id] ^ 1]}!")  # pylint: disable=inconsistent-quotes
+                       f" with {vote[win_id]} vote{voting.plurls(vote[win_id])}!")
 
         if tiebreak == 1:
             message_txt += "\n\n(Stalemate Resolution Rule 1: Highest disregarded votes)"

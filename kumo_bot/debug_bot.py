@@ -20,6 +20,7 @@ class DebugBot(KumoBot):
     def __init__(self):
         super().__init__()
         self.command_prefix = "<"  # Debug prefix
+        self.debug = True
 
         # Override activity for debug mode
         self.activity = discord.Activity(type=discord.ActivityType.playing, name="with fire. [DEBUG MODE]")
@@ -176,7 +177,7 @@ class DebugBot(KumoBot):
     async def edit_config(self, interaction: discord.Interaction, setting: str, value: str = None):
         """Emergency configuration editor for debug mode."""
         await interaction.response.send_message(f"Forcing {setting}: {value}", ephemeral=True)
-        self.config._config[setting] = value  # pylint: disable=protected-access
+        self.config[setting] = value
         # This is debug mode this violation is intentional.
         self.config.update()
         logging.info("Owner override coerced %s: %s", setting, value)

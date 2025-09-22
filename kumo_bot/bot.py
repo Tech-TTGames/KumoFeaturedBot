@@ -26,6 +26,7 @@ class KumoBot(commands.Bot):
         self.config = Config(self)
         self.secret = Secret()
         self.root = pathlib.Path(__file__).parent.parent
+        self.debug = False
 
         # Set up command prefix from config
         self.command_prefix = self.config.prefix
