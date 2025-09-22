@@ -5,7 +5,6 @@ import logging
 import discord
 from discord import app_commands
 from discord.ext import commands
-from fanficfare import cli
 
 from kumo_bot.config import constants
 from kumo_bot.utils import checks, downloaders
