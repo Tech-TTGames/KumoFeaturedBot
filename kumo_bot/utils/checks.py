@@ -69,13 +69,10 @@ def is_operator():
         else:
             return bypass
         config = interaction.client.config
-        try:
-            if hasattr(config, "role_id") and config.role_id:
-                member = (interaction.guild.get_member(interaction.user.id) if interaction.guild else None)
-                if member and any(role.id == config.role_id for role in member.roles):
-                    return True
-        except (ValueError, AttributeError):
-            pass
+        if hasattr(config, "role_id") and config.role_id:
+            member = (interaction.guild.get_member(interaction.user.id) if interaction.guild else None)
+            if member and any(role.id == config.role_id for role in member.roles):
+                return True
         raise app_commands.CheckFailure("You don't have permission to use this command.")
 
     return app_commands.check(predicate)

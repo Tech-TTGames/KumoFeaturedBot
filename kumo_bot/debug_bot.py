@@ -18,9 +18,7 @@ class DebugBot(KumoBot):
     """Debug version of the bot with additional debug commands."""
 
     def __init__(self):
-        super().__init__()
-        self.command_prefix = "<"  # Debug prefix
-        self.debug = True
+        super().__init__(True, ">")
 
         # Override activity for debug mode
         self.activity = discord.Activity(type=discord.ActivityType.playing, name="with fire. [DEBUG MODE]")

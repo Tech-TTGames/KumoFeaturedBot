@@ -45,7 +45,8 @@ class SetupBot(commands.Bot):
             await dm_channel.send("Please select the prefix for the bot. (During setup, the prefix is '.')")
             prefi = await self.wait_for("message", check=dm_from_user)
             if prefi.content == "cancel":
-                return await dm_channel.send("Setup cancelled.")
+                await dm_channel.send("Setup cancelled.")
+                return
             confi["prefix"] = prefi.content
 
             # Get guild ID
@@ -53,7 +54,8 @@ class SetupBot(commands.Bot):
             while True:
                 gld = await self.wait_for("message", check=dm_from_user)
                 if gld.content == "cancel":
-                    return await dm_channel.send("Setup cancelled.")
+                    await dm_channel.send("Setup cancelled.")
+                    return
                 if gld.content.isnumeric():
                     guild = self.get_guild(int(gld.content))
                     if guild is None:
@@ -72,7 +74,8 @@ class SetupBot(commands.Bot):
             while True:
                 chn = await self.wait_for("message", check=dm_from_user)
                 if chn.content == "cancel":
-                    return await dm_channel.send("Setup cancelled.")
+                    await dm_channel.send("Setup cancelled.")
+                    return
                 if chn.content.isnumeric():
                     channel = self.get_channel(int(chn.content))
                     if channel is None or channel.guild.id != confi["guild"]:
@@ -91,7 +94,8 @@ class SetupBot(commands.Bot):
             while True:
                 rol = await self.wait_for("message", check=dm_from_user)
                 if rol.content == "cancel":
-                    return await dm_channel.send("Setup cancelled.")
+                    await dm_channel.send("Setup cancelled.")
+                    return
                 if rol.content.isnumeric():
                     role = guild.get_role(int(rol.content))
                     if role is None:
