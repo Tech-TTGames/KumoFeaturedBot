@@ -21,9 +21,7 @@ async def predicate_isowner(interaction: discord.Interaction):
     app_info = await interaction.client.application_info()
     if app_info.team:
         # Bot is owned by a team
-        is_team_owner = interaction.user.id in [
-            member.id for member in app_info.team.members
-        ]
+        is_team_owner = interaction.user.id in [member.id for member in app_info.team.members]
     else:
         # Bot is owned by a single user
         is_team_owner = interaction.user.id == app_info.owner.id
@@ -48,8 +46,7 @@ async def predicate_isadmin(interaction: discord.Interaction):
         member = interaction.guild.get_member(interaction.user.id)
         if member and member.guild_permissions.administrator:
             return True
-    raise app_commands.CheckFailure(
-        "You don't have permission to use this command.")
+    raise app_commands.CheckFailure("You don't have permission to use this command.")
 
 
 def is_admin():
@@ -68,10 +65,8 @@ def is_operator():
         config = interaction.client.config
         try:
             if hasattr(config, "role_id") and config.role_id:
-                member = (interaction.guild.get_member(interaction.user.id)
-                          if interaction.guild else None)
-                if member and any(role.id == config.role_id
-                                  for role in member.roles):
+                member = (interaction.guild.get_member(interaction.user.id) if interaction.guild else None)
+                if member and any(role.id == config.role_id for role in member.roles):
                     return True
         except (ValueError, AttributeError):
             pass

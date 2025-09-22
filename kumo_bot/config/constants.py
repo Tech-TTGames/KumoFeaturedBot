@@ -47,8 +47,4 @@ intents.message_content = True
 intents.messages = True
 
 # Default logging handler
-handler = RotatingFileHandler(filename="discord.log",
-                              encoding="utf-8",
-                              mode="w",
-                              backupCount=10,
-                              maxBytes=100000)
+handler = RotatingFileHandler(filename="discord.log", encoding="utf-8", mode="w", backupCount=10, maxBytes=100000)

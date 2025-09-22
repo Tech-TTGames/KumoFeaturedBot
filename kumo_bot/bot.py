@@ -4,8 +4,6 @@ import pathlib
 
 import discord
 from discord.ext import commands
-from lncrawl.core import app, sources
-from lncrawl.binders import available_formats
 from fanficfare import cli, loghandler
 
 from kumo_bot.config.constants import handler, intents
@@ -21,8 +19,7 @@ class KumoBot(commands.Bot):
             command_prefix=commands.when_mentioned,
             intents=intents,
             status=discord.Status.online,
-            activity=discord.Activity(type=discord.ActivityType.watching,
-                                      name="for voter fraud."),
+            activity=discord.Activity(type=discord.ActivityType.watching, name="for voter fraud."),
         )
 
         # Initialize configuration and secrets
@@ -39,15 +36,6 @@ class KumoBot(commands.Bot):
         loghandler.setLevel(logging.CRITICAL)
         log_stuff = cli.logger
         log_stuff.addHandler(handler)
-
-        # Set up lightnovel crawler
-        sources.load_sources()
-        self.lnc_app = app.App()
-        self.lnc_app.no_suffix_after_filename = True
-        self.lnc_app.output_formats = {
-            x: (x in ["epub", "json"])
-            for x in available_formats
-        }
 
     async def setup_hook(self):
         """Setup hook called when the bot is starting."""

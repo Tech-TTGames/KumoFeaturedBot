@@ -17,7 +17,7 @@ class Events(commands.Cog):
         if hasattr(ctx.command, "on_error"):
             return
 
-        ignored = (app_commands.CommandNotFound, )
+        ignored = (app_commands.CommandNotFound,)
         error = getattr(error, "original", error)
 
         if isinstance(error, ignored):
@@ -25,8 +25,7 @@ class Events(commands.Cog):
 
         if isinstance(error, app_commands.NoPrivateMessage):
             try:
-                await ctx.user.send(
-                    f"{ctx.command} can not be used in Private Messages.")
+                await ctx.user.send(f"{ctx.command} can not be used in Private Messages.")
             except discord.HTTPException:
                 pass
 
@@ -41,9 +40,7 @@ class Events(commands.Cog):
             )
 
         elif isinstance(error, app_commands.MissingRole):
-            await ctx.response.send_message(
-                "You are missing the role to run this command.",
-                ephemeral=True)
+            await ctx.response.send_message("You are missing the role to run this command.", ephemeral=True)
 
         else:
             logging.exception(

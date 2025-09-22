@@ -11,7 +11,6 @@ requires-python = ">=3.13"
 dependencies = [
     "discord-py (>=2.6.3,<3.0.0)",
     "fanficfare (>=4.48.0,<5.0.0)",
-    "lightnovel-crawler (>=3.10.1,<4.0.0)"
 ]
 
 [project.urls]

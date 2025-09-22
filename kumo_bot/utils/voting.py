@@ -5,8 +5,7 @@ import discord
 def parse_votemsg(votemsg: discord.Message) -> list[tuple[str, str]]:
     """Parses the previous vote messages into a list of all submissions."""
     all_competitors = []
-    if votemsg.embeds and votemsg.embeds[0].description and votemsg.embeds[
-            0].title == "Vote":
+    if votemsg.embeds and votemsg.embeds[0].description and votemsg.embeds[0].title == "Vote":
         for line in votemsg.embeds[0].description.splitlines():
             if " - " in line:
                 clean = line.split(" - ")

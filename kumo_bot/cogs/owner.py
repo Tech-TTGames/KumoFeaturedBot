@@ -16,12 +16,10 @@ class OwnerCommands(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @app_commands.command(name="override",
-                          description="Tech's admin commands.")
+    @app_commands.command(name="override", description="Tech's admin commands.")
     @app_commands.describe(command="Command to use.")
     @checks.is_owner()
-    async def override(self, interaction: discord.Interaction,
-                       command: str) -> None:
+    async def override(self, interaction: discord.Interaction, command: str) -> None:
         """This command is used to override the bot's commands."""
         config = self.bot.config
 
@@ -69,14 +67,11 @@ class OwnerCommands(commands.Cog):
         elif command == "debugties":
             config.debug_tie = not config.debug_tie
             logging.info("Debug Tie toggled: %s", config.debug_tie)
-            await interaction.followup.send(
-                f"Debug Tie toggled: {config.debug_tie}")
+            await interaction.followup.send(f"Debug Tie toggled: {config.debug_tie}")
         else:
             await interaction.followup.send("Invalid override command.")
 
-    @app_commands.command(
-        name="configuration",
-        description="Displays the current configuration of the bot.")
+    @app_commands.command(name="configuration", description="Displays the current configuration of the bot.")
     @checks.is_owner()
     async def configuration(self, interaction: discord.Interaction) -> None:
         """This command is used to check the current configuration of the bot."""
@@ -108,10 +103,9 @@ class OwnerCommands(commands.Cog):
             name="Current Democracy:tm: Users",
             value="\n".join([a.mention for a in democracy]),
         )
-        await interaction.response.send_message(
-            embed=readable_config,
-            ephemeral=True,
-            allowed_mentions=discord.AllowedMentions.none())
+        await interaction.response.send_message(embed=readable_config,
+                                                ephemeral=True,
+                                                allowed_mentions=discord.AllowedMentions.none())
 
 
 async def setup(bot):

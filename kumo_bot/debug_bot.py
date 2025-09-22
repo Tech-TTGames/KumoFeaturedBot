@@ -16,8 +16,7 @@ class DebugBot(KumoBot):
         self.command_prefix = "<"  # Debug prefix
 
         # Override activity for debug mode
-        self.activity = discord.Activity(type=discord.ActivityType.playing,
-                                         name="with fire. [DEBUG MODE]")
+        self.activity = discord.Activity(type=discord.ActivityType.playing, name="with fire. [DEBUG MODE]")
 
         # Add debug commands
         self.add_debug_commands()
@@ -25,18 +24,14 @@ class DebugBot(KumoBot):
     def add_debug_commands(self):
         """Add debug-specific commands."""
 
-        @self.command(brief="Pings the bot.",
-                      description="Pings the bot. What do you expect.")
+        @self.command(brief="Pings the bot.", description="Pings the bot. What do you expect.")
         async def ping(ctx):
             """This command is used to check if the bot is online."""
-            await ctx.send(
-                "Pong! The bot is online.\nPing: " +
-                str(round(self.latency * 1000)) +
-                "ms\n*Warning! This bot is currently in debug mode.*")
+            await ctx.send("Pong! The bot is online.\nPing: " + str(round(self.latency * 1000)) +
+                           "ms\n*Warning! This bot is currently in debug mode.*")
             await self.change_presence(
                 status=discord.Status.dnd,
-                activity=discord.Activity(type=discord.ActivityType.playing,
-                                          name="with fire. [DEBUG MODE]"),
+                activity=discord.Activity(type=discord.ActivityType.playing, name="with fire. [DEBUG MODE]"),
             )
 
         @self.command(
@@ -45,20 +40,15 @@ class DebugBot(KumoBot):
         )
         async def version(ctx):
             """This command is used to check the current version of the bot."""
-            await ctx.send("KumoFeaturedBot " + VERSION +
-                           " by @techttgames is running."
+            await ctx.send("KumoFeaturedBot " + VERSION + " by @techttgames is running."
                            "\n*Warning! This bot is currently in debug mode.*")
 
         @self.command(brief="[REDACTED]", description="Tech's admin commands.")
         @commands.is_owner()
-        async def override(ctx,
-                           command: str = commands.parameter(
-                               default=None, description="Command")):
+        async def override(ctx, command: str = commands.parameter(default=None, description="Command")):
             """Various commands for testing."""
             if command is None:
-                await ctx.send(
-                    "Available commands: testget, reboot, testhistory, pull, set"
-                )
+                await ctx.send("Available commands: testget, reboot, testhistory, pull, set")
                 return
 
             if command == "testget":
@@ -71,15 +61,13 @@ class DebugBot(KumoBot):
                 await self.close()
 
             elif command == "testhistory":
-                await ctx.send(
-                    "History test not implemented in modular version.")
+                await ctx.send("History test not implemented in modular version.")
 
             elif command == "pull":
                 await ctx.send("Pull command disabled in debug mode.")
 
             elif command.startswith("set"):
-                await ctx.send(
-                    "Set command not implemented in modular version.")
+                await ctx.send("Set command not implemented in modular version.")
 
             else:
                 await ctx.send("Unknown debug command.")
@@ -100,7 +88,4 @@ class DebugBot(KumoBot):
 
     def run_bot(self):
         """Run the debug bot."""
-        self.run(self.secret.token,
-                 log_handler=handler,
-                 log_level=logging.DEBUG,
-                 root_logger=True)
+        self.run(self.secret.token, log_handler=handler, log_level=logging.DEBUG, root_logger=True)

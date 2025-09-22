@@ -93,8 +93,7 @@ class Config:
         raise ValueError("Channel is not a text channel or thread")
 
     @channel.setter
-    def channel(self, channel: Union[discord.TextChannel,
-                                     discord.Thread]) -> None:
+    def channel(self, channel: Union[discord.TextChannel, discord.Thread]) -> None:
         self._config["channel"] = channel.id
         self.update()
 
@@ -166,8 +165,7 @@ class Config:
         """Gets time to close the running vote on"""
         if self._config.get("closetime", None) is None:
             return None
-        return datetime.fromtimestamp(self._config["closetime"],
-                                      tz=timezone.utc)
+        return datetime.fromtimestamp(self._config["closetime"], tz=timezone.utc)
 
     @closetime.setter
     def closetime(self, time: Optional[datetime]) -> None:
@@ -222,8 +220,7 @@ class Config:
             for id_ in ids:
                 member = self.guild.get_member(id_)
                 if member is None:
-                    democracy_members.append(await
-                                             self.guild.fetch_member(id_))
+                    democracy_members.append(await self.guild.fetch_member(id_))
                 elif member is discord.Member:
                     democracy_members.append(member)
             return democracy_members

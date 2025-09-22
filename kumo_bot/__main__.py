@@ -1,9 +1,6 @@
 """This file is used to control in which mode to run the bot based on the config.json file"""
 import json
 import logging
-import os
-
-from lncrawl.core import proxy
 
 
 def get_mode():
@@ -27,21 +24,13 @@ if __name__ == "__main__":
         from kumo_bot.debug_bot import DebugBot
 
         bot = DebugBot()
-        bot.run_bot()
     elif mode == "prod":
         from kumo_bot.bot import KumoBot
 
-        os.environ["use_proxy"] = "auto"
-        proxy.start_proxy_fetcher()
-        try:
-            bot = KumoBot()
-            bot.run_bot()
-        finally:
-            proxy.stop_proxy_fetcher()
+        bot = KumoBot()
     else:
         from kumo_bot.setup_bot import SetupBot
 
-        logging.critical(
-            "Invalid or not found mode in config.json. Entering setup mode.")
+        logging.critical("Invalid or not found mode in config.json. Entering setup mode.")
         bot = SetupBot()
-        bot.run_bot()
+    bot.run_bot()
