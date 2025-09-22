@@ -84,7 +84,8 @@ class DebugBot(KumoBot):
     async def load_extensions(self):
         """Load only utility extensions for debug mode."""
         extensions = [
-            'kumo_bot.commands.utility',
+            'kumo_bot.cogs.utility',
+            'kumo_bot.cogs.events',
         ]
         
         for extension in extensions:

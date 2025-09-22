@@ -10,15 +10,13 @@ kumo_bot/
 ├── bot.py                   # Main KumoBot class with cog loading
 ├── debug_bot.py             # Debug-specific bot extension
 ├── setup_bot.py             # Setup-specific bot extension
-├── commands/                # Command modules (Discord.py cogs)
-│   ├── __init__.py
+├── cogs/                    # Discord.py cogs for command organization
+│   ├── __init__.py         # Auto-discovery of all cogs
 │   ├── admin.py            # Admin commands (blacklist, override, etc.)
 │   ├── voting.py           # Voting commands (startvote, endvote, etc.)
-│   └── utility.py          # Utility commands (ping, version, config)
-├── events/                 # Event handlers
-│   ├── __init__.py
-│   └── handlers.py         # Event handling (on_ready, on_command_error)
-└── utils/                  # Shared utilities
+│   ├── utility.py          # Utility commands (ping, version, config)
+│   └── events.py           # Event handlers (on_ready, on_command_error)
+└── utils/                   # Shared utilities
     ├── __init__.py
     ├── checks.py           # Custom command checks
     ├── downloaders.py      # File download utilities
@@ -30,8 +28,7 @@ kumo_bot/
 ### KumoBot (`kumo_bot/bot.py`)
 The main bot class that:
 - Initializes the Discord bot with proper intents and configuration
-- Loads all command cogs automatically
-- Sets up event handlers
+- Auto-loads all cogs using the discovery mechanism from Tickets-Plus
 - Manages the lightnovel-crawler integration
 - Provides the main entry point for production mode
 
@@ -49,15 +46,15 @@ Specialized bot for initial setup that:
 - Creates initial config.json file
 - Minimal command set for setup only
 
-## Command Modules (Cogs)
+## Cogs
 
-### UtilityCommands (`kumo_bot/commands/utility.py`)
+### UtilityCommands (`kumo_bot/cogs/utility.py`)
 Basic utility commands:
 - `/ping` - Check bot responsiveness
 - `/version` - Display bot version
 - `/configuration` - Show current configuration (owner only)
 
-### AdminCommands (`kumo_bot/commands/admin.py`)
+### AdminCommands (`kumo_bot/cogs/admin.py`)
 Administrative commands:
 - `/blacklist` - Manage user blacklist
 - `/votecountmode` - Configure vote counting
@@ -67,12 +64,18 @@ Administrative commands:
 - `/pinops` - Pin/unpin messages
 - `/download` - Download fanfiction files
 
-### VotingCommands (`kumo_bot/commands/voting.py`)
+### VotingCommands (`kumo_bot/cogs/voting.py`)
 Core voting functionality:
 - `/startvote` - Start a new vote
 - `/endvote` - End current vote
 - `/autoclose` - Set automatic vote closing
 - Vote processing and result calculation
+
+### Events (`kumo_bot/cogs/events.py`)
+Event handlers:
+- Error handling for commands
+- Bot ready event processing
+- Vote auto-close functionality
 
 ## Utility Modules
 
@@ -90,11 +93,17 @@ File download utilities:
 Vote processing utilities:
 - `parse_votemsg()` - Parse vote messages for submissions
 
-### Event Handlers (`kumo_bot/events/handlers.py`)
-Centralized event handling:
-- Error handling for commands
-- Bot ready event processing
-- Vote auto-close functionality
+## Cog Discovery
+
+Following the Tickets-Plus pattern, cogs are automatically discovered using:
+
+```python
+# In kumo_bot/cogs/__init__.py
+import pkgutil
+EXTENSIONS = [module.name for module in pkgutil.iter_modules(__path__, f"{__package__}.")]
+```
+
+This automatically finds all Python modules in the cogs directory and loads them as extensions.
 
 ## Entry Points
 
@@ -138,6 +147,7 @@ def start():
 4. **Testing**: Individual modules can be tested in isolation
 5. **Code Organization**: Clear structure makes navigation easier
 6. **Scalability**: New commands and features can be added as separate cogs
+7. **Auto-Discovery**: New cogs are automatically loaded without manual registration
 
 ## Migration Notes
 
@@ -155,12 +165,12 @@ def start():
 3. Include type hints and docstrings
 
 ### Adding a New Cog
-1. Create new file in `kumo_bot/commands/`
+1. Create new file in `kumo_bot/cogs/`
 2. Create a class inheriting from `commands.Cog`
 3. Add `async def setup(bot):` function
-4. Import and load in `kumo_bot/bot.py`
+4. The cog will be automatically discovered and loaded
 
 ### Adding New Utilities
 1. Create new file in `kumo_bot/utils/`
 2. Implement utility functions
-3. Import in relevant command modules
+3. Import in relevant cog modules

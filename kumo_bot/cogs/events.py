@@ -1,18 +1,17 @@
-"""Event handlers for the bot."""
+"""Events cog for the bot."""
 import logging
 import discord
 from discord import app_commands
+from discord.ext import commands
 
-from variables import Config
 
-
-class EventHandlers:
-    """Event handlers for the bot."""
+class Events(commands.Cog):
+    """Events cog for handling bot events."""
 
     def __init__(self, bot):
         self.bot = bot
-        self.config = Config(bot)
 
+    @commands.Cog.listener()
     async def on_command_error(self, ctx: discord.Interaction, error):
         """The event triggered when an error is raised while invoking a command."""
         if hasattr(ctx.command, "on_error"):
@@ -53,15 +52,26 @@ class EventHandlers:
                 exc_info=error,
             )
 
-    async def on_ready(self, endvote_internal_func=None):
+    @commands.Cog.listener()
+    async def on_ready(self):
         """This event is called when the bot is ready to be used."""
+        from variables import Config
+        config = Config(self.bot)
+        
         logging.info("%s has connected to Discord!", str(self.bot.user))
-        if self.config.armed:
+        if config.armed:
             return
-        if self.config.closetime and endvote_internal_func:
-            self.config.armed = True
-            logging.info("Resuming vote at %s", self.config.closetime)
-            await discord.utils.sleep_until(self.config.closetime)
+        if config.closetime:
+            config.armed = True
+            logging.info("Resuming vote at %s", config.closetime)
+            await discord.utils.sleep_until(config.closetime)
             logging.info("Closing vote via INTERNAL event.")
-            await endvote_internal_func("INTERNAL")  # type: ignore
-        self.config.armed = True
+            # Import here to avoid circular imports
+            from kumo_bot.cogs.voting import endvote_internal
+            await endvote_internal("INTERNAL")
+        config.armed = True
+
+
+async def setup(bot):
+    """Setup function to add the cog to the bot."""
+    await bot.add_cog(Events(bot))
