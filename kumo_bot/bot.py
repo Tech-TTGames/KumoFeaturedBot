@@ -38,7 +38,7 @@ class KumoBot(commands.Bot):
         loghandler.setLevel(logging.CRITICAL)
         log_stuff = cli.logger
         log_stuff.addHandler(handler)
-        self.add_command(self.sync())
+        self.add_command(self.sync)
 
     async def setup_hook(self):
         """Setup hook called when the bot is starting."""
