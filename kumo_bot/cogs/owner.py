@@ -108,6 +108,16 @@ class OwnerCommands(commands.Cog):
                                                 allowed_mentions=discord.AllowedMentions.none())
 
 
+    @commands.command()
+    @commands.dm_only()
+    @commands.is_owner()
+    async def sync(self, ctx: commands.Context):
+        """Syncs the bot's slash commands."""
+        await ctx.send("Syncing...")
+        await self.bot.tree.sync()
+        await ctx.send("Synced!")
+
+
 async def setup(bot):
     """Setup function to add the cog to the bot."""
     await bot.add_cog(OwnerCommands(bot))

@@ -38,7 +38,6 @@ class KumoBot(commands.Bot):
         loghandler.setLevel(logging.CRITICAL)
         log_stuff = cli.logger
         log_stuff.addHandler(handler)
-        self.add_command(self.sync)
 
     async def setup_hook(self):
         """Setup hook called when the bot is starting."""
@@ -51,14 +50,6 @@ class KumoBot(commands.Bot):
                 logging.error("Failed to load cog %s: %s", extension, err)
         logging.info("Finished loading cogs.")
 
-    @commands.command()
-    @commands.dm_only()
-    @commands.is_owner()
-    async def sync(self, ctx: commands.Context):
-        """Syncs the bot's slash commands."""
-        await ctx.send("Syncing...")
-        await self.tree.sync()
-        await ctx.send("Synced!")
 
     def run_bot(self):
         """Run the bot."""
