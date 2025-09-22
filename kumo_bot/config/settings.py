@@ -231,9 +231,11 @@ class Config:
 
     @property
     def debug_tie(self) -> bool:
+        """Gets debug tie setting."""
         return self._config.get("debug_tie", False)
 
     @debug_tie.setter
     def debug_tie(self, val: bool) -> None:
+        """Sets debug tie setting."""
         self._config["debug_tie"] = val
         self.update()

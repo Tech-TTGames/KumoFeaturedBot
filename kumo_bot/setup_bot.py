@@ -3,7 +3,6 @@ import json
 import logging
 from typing import Any, Dict
 
-import discord
 from discord.ext import commands
 
 from kumo_bot.config.constants import VERSION, handler, intents
@@ -16,7 +15,7 @@ class SetupBot(commands.Bot):
     def __init__(self):
         super().__init__(command_prefix=".", intents=intents)
         self.secret = Secret()
-        
+
         # Add setup commands
         self.add_setup_commands()
 

@@ -1,13 +1,16 @@
 """Admin commands for the bot."""
 import asyncio
 import logging
-import os
 
 import discord
 from discord import app_commands
 from discord.ext import commands
+from lncrawl.core import app
+from fanficfare import cli
+from lncrawl.binders import available_formats
 
 from kumo_bot.config.constants import VERSION
+from kumo_bot.config.settings import Config
 from kumo_bot.utils.checks import has_admin_role
 from kumo_bot.utils.downloaders import fetch_download
 
@@ -27,16 +30,16 @@ class AdminCommands(commands.Cog):
     @app_commands.command(name="version", description="Displays the current version of the bot.")
     async def version(self, interaction: discord.Interaction) -> None:
         """This command is used to check the current version of the bot."""
-        await interaction.response.send_message(f"KumoFeaturedBot {VERSION} by Tech. TTGames#8616 is running.")
+        await interaction.response.send_message(
+            f"KumoFeaturedBot {VERSION} by Tech. TTGames#8616 is running.")
 
     @app_commands.command(name="blacklist", description="Blacklists a user.")
     @has_admin_role()
     async def blacklist(self, interaction: discord.Interaction,
                         user: discord.User) -> None:
         """This command is used to blacklist a user from voting."""
-        from kumo_bot.config.settings import Config
         config = Config(self.bot)
-        
+
         blacklst = config.blacklist
         if user.id in blacklst:
             blacklst.remove(user.id)
@@ -61,7 +64,6 @@ class AdminCommands(commands.Cog):
     async def votecountmode(self, interaction: discord.Interaction,
                             mode: app_commands.Choice[int]) -> None:
         """This command is used to configure the vote count mode."""
-        from kumo_bot.config.settings import Config
         config = Config(self.bot)
         config.vote_count_mode = mode.value
 
@@ -76,7 +78,6 @@ class AdminCommands(commands.Cog):
     async def accessrole(self, interaction: discord.Interaction,
                          addrole: discord.Role) -> None:
         """Sets the <addrole> as the bot role."""
-        from kumo_bot.config.settings import Config
         config = Config(self.bot)
         config.role = addrole
 
@@ -89,7 +90,6 @@ class AdminCommands(commands.Cog):
     async def setmention(self, interaction: discord.Interaction,
                          mention: discord.Role) -> None:
         """Sets the <mention> as the mention."""
-        from kumo_bot.config.settings import Config
         config = Config(self.bot)
         config.mention = mention
 
@@ -101,9 +101,11 @@ class AdminCommands(commands.Cog):
     @app_commands.describe(pind="ID of the message to be pinned/unpinned.")
     async def pinops(self, interaction: discord.Interaction, pind: str) -> None:
         """Pins or unpins a message."""
-        INVALID_CHANNEL_LIKES = (discord.StageChannel, discord.ForumChannel, discord.CategoryChannel)
-        
-        if (isinstance(interaction.channel, INVALID_CHANNEL_LIKES)
+        invalid_channel_types = (
+            discord.StageChannel, discord.ForumChannel, discord.CategoryChannel
+        )
+
+        if (isinstance(interaction.channel, invalid_channel_types)
                 or interaction.channel is None):
             await interaction.response.send_message(
                 "This command cannot be used in this channel.", ephemeral=True)
@@ -130,12 +132,7 @@ class AdminCommands(commands.Cog):
         """Downloads a fic."""
         await interaction.response.defer(thinking=True)
         logging.info("Downloading fic from %s", url)
-        
-        # Import here to avoid circular imports
-        from lncrawl.core import app
-        from fanficfare import cli
-        from lncrawl.binders import available_formats
-        
+
         # Initialize the application
         application = app.App()
         application.no_suffix_after_filename = True
@@ -144,10 +141,10 @@ class AdminCommands(commands.Cog):
             for x in available_formats
         }
         log_stuff = cli.logger
-        
+
         try:
             file = await asyncio.wait_for(fetch_download(url, application, log_stuff), timeout=800)
-        except Exception as e:
+        except (asyncio.TimeoutError, ConnectionError, ValueError) as e:
             logging.warning("Failed to download fic. %s Error Stack:\n",
                             e,
                             exc_info=True)

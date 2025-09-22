@@ -5,7 +5,8 @@ import discord
 from discord.ext import commands
 
 from kumo_bot.bot import KumoBot
-from kumo_bot.config.constants import VERSION
+from kumo_bot.config.constants import VERSION, handler
+from discord.ext import commands
 
 
 class DebugBot(KumoBot):
@@ -14,13 +15,13 @@ class DebugBot(KumoBot):
     def __init__(self):
         super().__init__()
         self.command_prefix = "<"  # Debug prefix
-        
+
         # Override activity for debug mode
         self.activity = discord.Activity(
             type=discord.ActivityType.playing,
             name="with fire. [DEBUG MODE]"
         )
-        
+
         # Add debug commands
         self.add_debug_commands()
 
@@ -63,21 +64,21 @@ class DebugBot(KumoBot):
             if command == "testget":
                 # Simplified test command
                 await ctx.send("Test command executed in debug mode.")
-                
+
             elif command == "reboot":
                 logging.info("Rebooting...")
                 await ctx.send("Rebooting...")
                 await self.close()
-                
+
             elif command == "testhistory":
                 await ctx.send("History test not implemented in modular version.")
-                
+
             elif command == "pull":
                 await ctx.send("Pull command disabled in debug mode.")
-                
+
             elif command.startswith("set"):
                 await ctx.send("Set command not implemented in modular version.")
-                
+
             else:
                 await ctx.send("Unknown debug command.")
 
@@ -87,16 +88,15 @@ class DebugBot(KumoBot):
             'kumo_bot.cogs.utility',
             'kumo_bot.cogs.events',
         ]
-        
+
         for extension in extensions:
             try:
                 await self.load_extension(extension)
-                logging.info(f"Loaded extension: {extension}")
-            except Exception as e:
-                logging.error(f"Failed to load extension {extension}: {e}")
+                logging.info("Loaded extension: %s", extension)
+            except commands.ExtensionError as e:
+                logging.error("Failed to load extension %s: %s", extension, e)
 
     def run_bot(self):
         """Run the debug bot."""
-        from kumo_bot.config.constants import handler
-        self.run(self.secret.token, log_handler=handler, 
+        self.run(self.secret.token, log_handler=handler,
                  log_level=logging.DEBUG, root_logger=True)

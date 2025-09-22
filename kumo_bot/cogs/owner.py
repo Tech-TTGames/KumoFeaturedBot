@@ -23,7 +23,7 @@ class OwnerCommands(commands.Cog):
         """This command is used to override the bot's commands."""
         from kumo_bot.config.settings import Config
         config = Config(self.bot)
-        
+
         await interaction.response.defer(thinking=True)
         logging.info("Owner override triggered: %s", command)
 
@@ -79,7 +79,7 @@ class OwnerCommands(commands.Cog):
         """This command is used to check the current configuration of the bot."""
         from kumo_bot.config.settings import Config
         config = Config(self.bot)
-        
+
         last_vote = await config.lastvote
         last_win = await config.lastwin
         democracy = await config.democracy

@@ -11,13 +11,15 @@ def parse_votemsg(votemsg: discord.Message) -> list[tuple[str, str]]:
             if " - " in line:
                 clean = line.split(" - ")
                 uri = clean[1].lstrip("<").rstrip(">")
-                submitees = clean[2] if 2 < len(clean) else ""  # We just take the actual string of this
+                # We just take the actual string of this
+                submitees = clean[2] if 2 < len(clean) else ""
                 all_competitors.append((uri, submitees))
     else:
         for line in votemsg.content.splitlines():
             if " - " in line:
                 clean = line.split(" - ")
                 uri = clean[1].lstrip("<").rstrip(">")
-                submitees = clean[2] if 2 < len(clean) else ""  # We just take the actual string of this
+                # We just take the actual string of this
+                submitees = clean[2] if 2 < len(clean) else ""
                 all_competitors.append((uri, submitees))
     return all_competitors

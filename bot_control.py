@@ -23,7 +23,7 @@ def get_mode():
 def start_bot():
     """Start the appropriate bot based on the mode."""
     mode = get_mode()
-    
+
     if mode == "debug":
         from kumo_bot.debug_bot import DebugBot
         bot = DebugBot()

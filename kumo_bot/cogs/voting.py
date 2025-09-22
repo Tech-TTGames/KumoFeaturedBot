@@ -1,10 +1,9 @@
 """Voting commands for the bot."""
-import asyncio
 import datetime
 import logging
 import re
-from random import choice, randint, shuffle
-from typing import Dict, List, Union
+from random import choice, shuffle
+from typing import Dict, Union
 
 import discord
 from discord import app_commands
@@ -42,15 +41,15 @@ class VotingCommands(commands.Cog):
                         presend: bool = False,
                         allow_duplicates: bool = False) -> None:
         """This command is used to start a vote."""
-        from kumo_bot.config.settings import Config
         config = Config(self.bot)
-        
-        INVALID_CHANNEL_LIKES = (discord.StageChannel, discord.ForumChannel, discord.CategoryChannel)
-        
+
+        invalid_channel_types = (
+            discord.StageChannel, discord.ForumChannel, discord.CategoryChannel
+        )
+
         submitted = {}
         submitted_old = []
         submitees = []
-        disreg_suggs = 0
 
         intchannel = interaction.channel
         if isinstance(intchannel, INVALID_CHANNEL_LIKES) or intchannel is None:
@@ -99,7 +98,9 @@ class VotingCommands(commands.Cog):
 
         submission_list = []
         for key, value in submitted.items():
-            submission_list.append(f"{EMOJI_ALPHABET[len(submission_list)]} - {key} - {', '.join(value)}")
+            emoji = EMOJI_ALPHABET[len(submission_list)]
+            submission_text = f"{emoji} - {key} - {', '.join(value)}"
+            submission_list.append(submission_text)
 
         shuffle(submission_list)
 
@@ -126,7 +127,7 @@ class VotingCommands(commands.Cog):
 
         # Send presend messages if requested
         if presend:
-            for key in submitted.keys():
+            for key in submitted:
                 await cha.send(key)
 
         # Send vote message
@@ -166,11 +167,11 @@ class VotingCommands(commands.Cog):
         hours="Hours to close after.",
         minutes="Minutes to close after."
     )
-    async def autoclose(self, interaction: discord.Interaction, hours: int = 0, minutes: int = 0) -> None:
+    async def autoclose(self, interaction: discord.Interaction,
+                     hours: int = 0, minutes: int = 0) -> None:
         """This command is used to set the autoclose time."""
-        from kumo_bot.config.settings import Config
         config = Config(self.bot)
-        
+
         if hours == 0 and minutes == 0:
             config.closetime = None
             await interaction.response.send_message("Autoclose disabled.", ephemeral=True)
@@ -178,27 +179,27 @@ class VotingCommands(commands.Cog):
             total_minutes = hours * 60 + minutes
             close_time = discord.utils.utcnow() + datetime.timedelta(minutes=total_minutes)
             config.closetime = close_time
+            close_time_str = close_time.strftime('%Y-%m-%d %H:%M:%S')
             await interaction.response.send_message(
-                f"Vote will close in {hours}h {minutes}m at {close_time.strftime('%Y-%m-%d %H:%M:%S')} UTC.",
+                f"Vote will close in {hours}h {minutes}m at {close_time_str} UTC.",
                 ephemeral=True
             )
 
 
 async def endvote_internal(interaction: Union[discord.Interaction, str]) -> None:
     """This command is used to end a vote."""
-    from kumo_bot.config.settings import Config
-    
+
     # Get bot instance from interaction or use a global reference
     if isinstance(interaction, str):
         # This is called from timer - we need bot reference
         return  # For now, skip internal timer calls
-    
+
     bot = interaction.client
     config = Config(bot)
-    
+
     channel = config.channel
     vote: Dict[str, int] = {}
-    
+
     if not config.vote_running:
         logging.info("Vote already closed.")
         return
@@ -229,7 +230,7 @@ async def endvote_internal(interaction: Union[discord.Interaction, str]) -> None
 
     # Simple vote counting - count reactions
     submitted = parse_votemsg(votemsg)
-    
+
     for reaction in votemsg.reactions:
         if reaction.emoji in EMOJI_ALPHABET:
             emoji_index = EMOJI_ALPHABET.index(reaction.emoji)
