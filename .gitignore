@@ -157,3 +157,7 @@ cython_debug/
 # Per-bot settings
 secret.json*
 config.json*
+
+# Temporary files during refactor
+bot_prod_original.py
+bot_prod_new.py

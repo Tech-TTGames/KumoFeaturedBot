@@ -1,51 +1,14 @@
-"""Declare variables that aren't changed between debug and production"""
+"""Configuration management classes for KumoFeaturedBot.
+
+This module contains the Secret and Config classes for managing
+bot configuration and secrets, following the Tickets-Plus pattern.
+"""
 import json
 from datetime import datetime, timezone
-from logging.handlers import RotatingFileHandler
 from typing import List, Optional, Union
 
 import discord
 from discord.ext import commands
-
-# v[major].[minor].[release].[build]
-VERSION = "v1.2.1.0"
-EMOJI_ALPHABET = [
-    "\U0001F1E6",
-    "\U0001F1E7",
-    "\U0001F1E8",
-    "\U0001F1E9",
-    "\U0001F1EA",
-    "\U0001F1EB",
-    "\U0001F1EC",
-    "\U0001F1ED",
-    "\U0001F1EE",
-    "\U0001F1EF",
-    "\U0001F1F0",
-    "\U0001F1F1",
-    "\U0001F1F2",
-    "\U0001F1F3",
-    "\U0001F1F4",
-    "\U0001F1F5",
-    "\U0001F1F6",
-    "\U0001F1F7",
-    "\U0001F1F8",
-    "\U0001F1F9",
-    "\U0001F1FA",
-    "\U0001F1FB",
-    "\U0001F1FC",
-    "\U0001F1FD",
-    "\U0001F1FE",
-    "\U0001F1FF",
-]
-
-intents = discord.Intents.default()
-intents.message_content = True  # pylint: disable=assigning-non-slot
-intents.messages = True  # pylint: disable=assigning-non-slot
-handler = RotatingFileHandler(filename="discord.log",
-                              encoding="utf-8",
-                              mode="w",
-                              backupCount=10,
-                              maxBytes=100000)
 
 
 class Secret:
@@ -73,10 +36,17 @@ class Config:
         with open(self._file, encoding="utf-8") as config_f:
             self._config = json.load(config_f)
         self._bt = bot
-        self.closetime_timestamp = self._config["closetime"]
 
     def __dict__(self) -> dict:
         return self._config
+
+    def __getitem__(self, key):
+        return self._config[key]
+
+    def __setitem__(self, key, value):
+        if not getattr(self._bt, "debug", False):
+            raise TypeError("While not in debug mode direct assignments are not allowed.")
+        self._config[key] = value
 
     def update(self) -> None:
         """Update the config.json file to reflect changes"""
@@ -89,7 +59,7 @@ class Config:
     @property
     def mode(self) -> str:
         """Gets current mode"""
-        return self._config["mode"]
+        return self._config.get("mode", "debug")
 
     @mode.setter
     def mode(self, mode: str) -> None:
@@ -99,7 +69,7 @@ class Config:
     @property
     def prefix(self) -> str:
         """Gets current prefix"""
-        return self._config["prefix"]
+        return self._config.get("prefix", ".")
 
     @prefix.setter
     def prefix(self, prefix: str) -> None:
@@ -130,8 +100,7 @@ class Config:
         raise ValueError("Channel is not a text channel or thread")
 
     @channel.setter
-    def channel(self, channel: Union[discord.TextChannel,
-                                     discord.Thread]) -> None:
+    def channel(self, channel: Union[discord.TextChannel, discord.Thread]) -> None:
         self._config["channel"] = channel.id
         self.update()
 
@@ -201,10 +170,9 @@ class Config:
     @property
     def closetime(self) -> Optional[datetime]:
         """Gets time to close the running vote on"""
-        if self._config.get("closetime",None) is None:
+        if self._config.get("closetime", None) is None:
             return None
-        return datetime.fromtimestamp(self._config["closetime"],
-                                      tz=timezone.utc)
+        return datetime.fromtimestamp(self._config["closetime"], tz=timezone.utc)
 
     @closetime.setter
     def closetime(self, time: Optional[datetime]) -> None:
@@ -268,9 +236,11 @@ class Config:
 
     @property
     def debug_tie(self) -> bool:
+        """Gets debug tie setting."""
         return self._config.get("debug_tie", False)
 
     @debug_tie.setter
     def debug_tie(self, val: bool) -> None:
+        """Sets debug tie setting."""
         self._config["debug_tie"] = val
         self.update()

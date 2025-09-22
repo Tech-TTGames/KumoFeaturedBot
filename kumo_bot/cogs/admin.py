@@ -1,0 +1,120 @@
+"""Admin commands for the bot."""
+import asyncio
+import logging
+
+import discord
+from discord import app_commands
+from discord.ext import commands
+
+from kumo_bot.config import constants
+from kumo_bot.utils import checks, downloaders
+
+
+class AdminCommands(commands.Cog):
+    """Admin commands cog."""
+
+    def __init__(self, bot):
+        self.bot = bot
+
+    @app_commands.command(name="ping", description="Pings the bot.")
+    async def ping(self, interaction: discord.Interaction) -> None:
+        """This command is used to check if the bot is online."""
+        latency = round(self.bot.latency * 1000)
+        await interaction.response.send_message(f"Pong! The bot is online.\nPing: {latency}ms")
+
+    @app_commands.command(name="version", description="Displays the current version of the bot.")
+    async def version(self, interaction: discord.Interaction) -> None:
+        """This command is used to check the current version of the bot."""
+        await interaction.response.send_message(f"KumoFeaturedBot {constants.VERSION} by @techttgames is running.")
+
+    @app_commands.command(name="blacklist", description="Blacklists a user.")
+    @checks.is_operator()
+    async def blacklist(self, interaction: discord.Interaction, user: discord.User) -> None:
+        """This command is used to blacklist a user from voting."""
+        blacklst = self.bot.config.blacklist
+        if user.id in blacklst:
+            blacklst.remove(user.id)
+            await interaction.response.send_message(f"User {user.mention} unblacklisted.", ephemeral=True)
+        else:
+            blacklst.append(user.id)
+            await interaction.response.send_message(f"User {user.mention} blacklisted.", ephemeral=True)
+
+    @app_commands.command(name="votecountmode", description="Sets the vote count mode.")
+    @checks.is_operator()
+    @app_commands.describe(mode="Vote count mode.")
+    @app_commands.choices(mode=[
+        app_commands.Choice(name="Legacy (all messages)", value=1),
+        app_commands.Choice(name="Modern (messages before vote)", value=0),
+        app_commands.Choice(name="Modern+ (messages before vote, 10-25 required)", value=2),
+    ])
+    async def votecountmode(self, interaction: discord.Interaction, mode: app_commands.Choice[int]) -> None:
+        """This command is used to configure the vote count mode."""
+        self.bot.config.vote_count_mode = mode.value
+
+        await interaction.response.send_message(
+            f"Vote count mode set to {mode.name}.",
+            ephemeral=True,
+        )
+
+    @app_commands.command(name="accessrole", description="Sets botrole.")
+    @checks.is_admin()
+    @app_commands.describe(addrole="Role to be set as botrole.")
+    async def accessrole(self, interaction: discord.Interaction, addrole: discord.Role) -> None:
+        """Sets the <addrole> as the bot role."""
+        self.bot.config.role = addrole
+
+        await interaction.response.send_message(f"Role {addrole} has been set as to have access.", ephemeral=True)
+
+    @app_commands.command(name="setmention", description="Sets mention.")
+    @checks.is_admin()
+    @app_commands.describe(mention="Role to be set as mention.")
+    async def setmention(self, interaction: discord.Interaction, mention: discord.Role) -> None:
+        """Sets the <mention> as the mention."""
+        self.bot.config.mention = mention
+
+        await interaction.response.send_message(f"Role {mention} has been set to be mentioned.", ephemeral=True)
+
+    @app_commands.command(name="pinops", description="Pin operations.")
+    @checks.is_admin()
+    @app_commands.describe(pind="ID of the message to be pinned/unpinned.")
+    async def pinops(self, interaction: discord.Interaction, pind: str) -> None:
+        """Pins or unpins a message."""
+        invalid_channel_types = (discord.StageChannel, discord.ForumChannel, discord.CategoryChannel)
+
+        if (isinstance(interaction.channel, invalid_channel_types) or interaction.channel is None):
+            await interaction.response.send_message("This command cannot be used in this channel.", ephemeral=True)
+            return
+        if not pind.isdigit():
+            await interaction.response.send_message("Message ID must be a number.", ephemeral=True)
+            return
+        pind_i = int(pind)
+        msg = await interaction.channel.fetch_message(pind_i)
+        if msg.pinned:
+            await msg.unpin()
+            await interaction.response.send_message(f"Message {pind} has been unpinned.", ephemeral=True)
+        else:
+            await msg.pin()
+            await interaction.response.send_message(f"Message {pind} has been pinned.", ephemeral=True)
+
+    @app_commands.command(name="download", description="Downloads a fic.")
+    @checks.is_admin()
+    @app_commands.describe(url="URL of the fic to be downloaded.")
+    async def download(self, interaction: discord.Interaction, url: str) -> None:
+        """Downloads a fic."""
+        await interaction.response.defer(thinking=True)
+        logging.info("Downloading fic from %s", url)
+
+        try:
+            file = await asyncio.wait_for(downloaders.fetch_download(url), timeout=800)
+        except (asyncio.TimeoutError, ConnectionError, ValueError) as e:
+            logging.warning("Failed to download fic. %s Error Stack:\n", e, exc_info=True)
+            file = None
+        if file is None:
+            await interaction.followup.send("Error while downloading fic.")
+            return
+        await interaction.followup.send(file=file)
+
+
+async def setup(bot):
+    """Setup function to add the cog to the bot."""
+    await bot.add_cog(AdminCommands(bot))
