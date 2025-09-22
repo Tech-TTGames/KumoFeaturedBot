@@ -7,7 +7,7 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 
-from kumo_bot.utils.checks import is_owner
+from kumo_bot.utils.checks import has_admin_role
 from kumo_bot.utils.downloaders import fetch_download
 
 
@@ -18,7 +18,7 @@ class AdminCommands(commands.Cog):
         self.bot = bot
 
     @app_commands.command(name="blacklist", description="Blacklists a user.")
-    @app_commands.checks.has_any_role(465888032537444353)  # Will be made dynamic
+    @has_admin_role()
     async def blacklist(self, interaction: discord.Interaction,
                         user: discord.User) -> None:
         """This command is used to blacklist a user from voting."""
@@ -38,7 +38,7 @@ class AdminCommands(commands.Cog):
 
     @app_commands.command(name="votecountmode",
                           description="Sets the vote count mode.")
-    @app_commands.checks.has_any_role(465888032537444353)  # Will be made dynamic
+    @has_admin_role()
     @app_commands.describe(mode="Vote count mode.")
     @app_commands.choices(mode=[
         app_commands.Choice(name="Legacy (all messages)", value=1),
@@ -58,64 +58,8 @@ class AdminCommands(commands.Cog):
             ephemeral=True,
         )
 
-    @app_commands.command(name="override", description="Tech's admin commands.")
-    @app_commands.describe(command="Command to use.")
-    @is_owner()
-    async def override(self, interaction: discord.Interaction, command: str) -> None:
-        """This command is used to override the bot's commands."""
-        from kumo_bot.config.settings import Config
-        config = Config(self.bot)
-        
-        await interaction.response.defer(thinking=True)
-        logging.info("Owner override triggered: %s", command)
-
-        if command == "reboot":
-            logging.info("Rebooting...")
-            await interaction.followup.send("Rebooting...")
-            await self.bot.close()
-
-        elif command == "log":
-            logging.info("Sending Log...")
-            dir_path = os.path.dirname(os.path.realpath(__file__))
-            fpath = os.path.join(dir_path, "discord.log")
-            await interaction.user.send(file=discord.File(fp=fpath))
-            await interaction.followup.send("Sent!")
-
-        elif command == "pull":
-            pull = await asyncio.create_subprocess_shell(
-                "git pull",
-                stdout=asyncio.subprocess.PIPE,
-                stderr=asyncio.subprocess.PIPE,
-                cwd=os.getcwd(),
-            )
-            stdo, stdr = await pull.communicate()
-            await interaction.followup.send("Pulling...")
-            if stdo:
-                await interaction.followup.send(f"[stdout]\n{stdo.decode()}")
-                logging.info("[stdout]\n%s", stdo.decode())
-
-            if stdr:
-                await interaction.followup.send(f"[stderr]\n{stdr.decode()}")
-                logging.info("[stderr]\n%s", stdr.decode())
-
-            await interaction.followup.send("Rebooting...")
-            logging.info("Rebooting...")
-            await self.bot.close()
-
-        elif command == "debug":
-            config.mode = "debug"
-            logging.info("Rebooting with debug mode...")
-            await interaction.followup.send("Debug mode enabling...")
-            await self.bot.close()
-        elif command == "debugties":
-            config.debug_tie = not config.debug_tie
-            logging.info("Debug Tie toggled: %s", config.debug_tie)
-            await interaction.followup.send(f"Debug Tie toggled: {config.debug_tie}")
-        else:
-            await interaction.followup.send("Invalid override command.")
-
     @app_commands.command(name="accessrole", description="Sets botrole.")
-    @app_commands.checks.has_any_role(465888032537444353)  # Will be made dynamic
+    @has_admin_role()
     @app_commands.describe(addrole="Role to be set as botrole.")
     async def accessrole(self, interaction: discord.Interaction,
                          addrole: discord.Role) -> None:
@@ -128,7 +72,7 @@ class AdminCommands(commands.Cog):
             f"Role {addrole} has been set as to have access.", ephemeral=True)
 
     @app_commands.command(name="setmention", description="Sets mention.")
-    @app_commands.checks.has_any_role(465888032537444353)  # Will be made dynamic
+    @has_admin_role()
     @app_commands.describe(mention="Role to be set as mention.")
     async def setmention(self, interaction: discord.Interaction,
                          mention: discord.Role) -> None:
@@ -141,7 +85,7 @@ class AdminCommands(commands.Cog):
             f"Role {mention} has been set to be mentioned.", ephemeral=True)
 
     @app_commands.command(name="pinops", description="Pin operations.")
-    @app_commands.checks.has_any_role(465888032537444353)  # Will be made dynamic
+    @has_admin_role()
     @app_commands.describe(pind="ID of the message to be pinned/unpinned.")
     async def pinops(self, interaction: discord.Interaction, pind: str) -> None:
         """Pins or unpins a message."""
@@ -168,7 +112,7 @@ class AdminCommands(commands.Cog):
                 f"Message {pind} has been pinned.", ephemeral=True)
 
     @app_commands.command(name="download", description="Downloads a fic.")
-    @app_commands.checks.has_any_role(465888032537444353)  # Will be made dynamic
+    @has_admin_role()
     @app_commands.describe(url="URL of the fic to be downloaded.")
     async def download(self, interaction: discord.Interaction, url: str) -> None:
         """Downloads a fic."""

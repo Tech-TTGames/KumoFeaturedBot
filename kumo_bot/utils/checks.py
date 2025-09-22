@@ -29,3 +29,32 @@ def is_owner():
         return True
 
     return app_commands.check(predicate)
+
+
+def has_admin_role():
+    """Check if user has admin role or is owner."""
+    
+    async def predicate(interaction: discord.Interaction):
+        """The predicate for the check."""
+        # Always allow owner
+        if interaction.user.id == 414075045678284810:
+            return True
+            
+        config = Config(interaction.client)
+        try:
+            # Check if user has the configured admin role
+            if hasattr(config, 'role_id') and config.role_id:
+                member = interaction.guild.get_member(interaction.user.id) if interaction.guild else None
+                if member and any(role.id == config.role_id for role in member.roles):
+                    return True
+        except (ValueError, AttributeError):
+            pass
+            
+        # Fallback to hardcoded role ID
+        member = interaction.guild.get_member(interaction.user.id) if interaction.guild else None
+        if member and any(role.id == 465888032537444353 for role in member.roles):
+            return True
+            
+        raise app_commands.CheckFailure("You don't have permission to use this command.")
+    
+    return app_commands.check(predicate)

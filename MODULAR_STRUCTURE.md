@@ -16,9 +16,10 @@ kumo_bot/
 │   └── settings.py         # Configuration classes (Config, Secret)
 ├── cogs/                    # Discord.py cogs for command organization
 │   ├── __init__.py         # Auto-discovery of all cogs
-│   ├── admin.py            # Admin commands (blacklist, override, etc.)
+│   ├── admin.py            # Admin commands (blacklist, votecountmode, etc.)
+│   ├── owner.py            # Owner-only commands (override, configuration)
 │   ├── voting.py           # Voting commands (startvote, endvote, etc.)
-│   ├── utility.py          # Utility commands (ping, version, config)
+│   ├── utility.py          # Utility commands (ping, version)
 │   └── events.py           # Event handlers (on_ready, on_command_error)
 └── utils/                   # Shared utilities
     ├── __init__.py
@@ -56,17 +57,20 @@ Specialized bot for initial setup that:
 Basic utility commands:
 - `/ping` - Check bot responsiveness
 - `/version` - Display bot version
-- `/configuration` - Show current configuration (owner only)
 
 ### AdminCommands (`kumo_bot/cogs/admin.py`)
-Administrative commands:
+Administrative commands with role-based permissions:
 - `/blacklist` - Manage user blacklist
 - `/votecountmode` - Configure vote counting
-- `/override` - Owner-only system commands
 - `/accessrole` - Set bot access role
 - `/setmention` - Set mention role
 - `/pinops` - Pin/unpin messages
 - `/download` - Download fanfiction files
+
+### OwnerCommands (`kumo_bot/cogs/owner.py`)
+Owner-only commands:
+- `/override` - System commands (reboot, debug, log, pull)
+- `/configuration` - View complete bot configuration
 
 ### VotingCommands (`kumo_bot/cogs/voting.py`)
 Core voting functionality:
@@ -101,6 +105,7 @@ Configuration management classes:
 Custom Discord command checks:
 - `@vote_running()` - Ensure a vote is currently active
 - `@is_owner()` - Restrict to bot owner
+- `@has_admin_role()` - Allow admin role or owner with proper fallback
 
 ### Downloaders (`kumo_bot/utils/downloaders.py`)
 File download utilities:
@@ -124,6 +129,17 @@ EXTENSIONS = [module.name for module in pkgutil.iter_modules(__path__, f"{__pack
 This automatically finds all Python modules in the cogs directory and loads them as extensions.
 
 ## Entry Points
+
+### `bot_control.py` (Recommended)
+Main entry point that automatically detects mode and runs appropriate bot:
+```python
+from kumo_bot.bot import KumoBot
+from kumo_bot.debug_bot import DebugBot  
+from kumo_bot.setup_bot import SetupBot
+
+def start_bot():
+    # Automatically detects mode from config.json and runs appropriate bot
+```
 
 The original bot files now serve as simple entry points:
 
@@ -175,6 +191,9 @@ def start():
 - All three operating modes (prod, debug, setup) maintained
 - Existing config.json and secret.json files work unchanged
 - **NEW**: Variables refactored from `variables.py` into `kumo_bot/config/` structure
+- **NEW**: Owner commands separated into dedicated cog
+- **NEW**: Permission checks improved with owner override support
+- **NEW**: Bot control refactored to eliminate wrapper files
 
 ## Adding New Features
 

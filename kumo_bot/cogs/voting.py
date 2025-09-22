@@ -11,7 +11,7 @@ from discord import app_commands
 from discord.ext import commands
 
 from kumo_bot.config.constants import EMOJI_ALPHABET
-from kumo_bot.utils.checks import vote_running
+from kumo_bot.utils.checks import vote_running, has_admin_role
 from kumo_bot.utils.voting import parse_votemsg
 
 
@@ -24,7 +24,7 @@ class VotingCommands(commands.Cog):
 
     @app_commands.command(name="startvote", description="Starts a vote.")
     @app_commands.guild_only()
-    @app_commands.checks.has_any_role(465888032537444353)  # Will be made dynamic
+    @has_admin_role()
     @app_commands.describe(
         cha="The channel to start the vote in.",
         polltime="Time to close the vote after in hours.",
@@ -154,14 +154,14 @@ class VotingCommands(commands.Cog):
 
     @app_commands.command(name="endvote", description="Ends vote.")
     @app_commands.guild_only()
-    @app_commands.checks.has_any_role(465888032537444353)  # Will be made dynamic
+    @has_admin_role()
     @vote_running()
     async def endvote(self, interaction: discord.Interaction) -> None:
         """This command is used to end a vote."""
         await endvote_internal(interaction)
 
     @app_commands.command(name="autoclose", description="Sets the autoclose time.")
-    @app_commands.checks.has_any_role(465888032537444353)  # Will be made dynamic
+    @has_admin_role()
     @app_commands.describe(
         hours="Hours to close after.",
         minutes="Minutes to close after."
