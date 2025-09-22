@@ -10,7 +10,7 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 
-from variables import EMOJI_ALPHABET
+from kumo_bot.config.constants import EMOJI_ALPHABET
 from kumo_bot.utils.checks import vote_running
 from kumo_bot.utils.voting import parse_votemsg
 
@@ -42,7 +42,7 @@ class VotingCommands(commands.Cog):
                         presend: bool = False,
                         allow_duplicates: bool = False) -> None:
         """This command is used to start a vote."""
-        from variables import Config
+        from kumo_bot.config.settings import Config
         config = Config(self.bot)
         
         INVALID_CHANNEL_LIKES = (discord.StageChannel, discord.ForumChannel, discord.CategoryChannel)
@@ -168,7 +168,7 @@ class VotingCommands(commands.Cog):
     )
     async def autoclose(self, interaction: discord.Interaction, hours: int = 0, minutes: int = 0) -> None:
         """This command is used to set the autoclose time."""
-        from variables import Config
+        from kumo_bot.config.settings import Config
         config = Config(self.bot)
         
         if hours == 0 and minutes == 0:
@@ -186,7 +186,7 @@ class VotingCommands(commands.Cog):
 
 async def endvote_internal(interaction: Union[discord.Interaction, str]) -> None:
     """This command is used to end a vote."""
-    from variables import Config
+    from kumo_bot.config.settings import Config
     
     # Get bot instance from interaction or use a global reference
     if isinstance(interaction, str):

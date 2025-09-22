@@ -6,7 +6,8 @@ from typing import Any, Dict
 import discord
 from discord.ext import commands
 
-from variables import VERSION, Secret, handler, intents
+from kumo_bot.config.constants import VERSION, handler, intents
+from kumo_bot.config.settings import Secret
 
 
 class SetupBot(commands.Bot):

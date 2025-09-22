@@ -55,7 +55,7 @@ class Events(commands.Cog):
     @commands.Cog.listener()
     async def on_ready(self):
         """This event is called when the bot is ready to be used."""
-        from variables import Config
+        from kumo_bot.config.settings import Config
         config = Config(self.bot)
         
         logging.info("%s has connected to Discord!", str(self.bot.user))

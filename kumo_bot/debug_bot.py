@@ -5,7 +5,7 @@ import discord
 from discord.ext import commands
 
 from kumo_bot.bot import KumoBot
-from variables import VERSION
+from kumo_bot.config.constants import VERSION
 
 
 class DebugBot(KumoBot):
@@ -97,6 +97,6 @@ class DebugBot(KumoBot):
 
     def run_bot(self):
         """Run the debug bot."""
-        from variables import handler
+        from kumo_bot.config.constants import handler
         self.run(self.secret.token, log_handler=handler, 
                  log_level=logging.DEBUG, root_logger=True)

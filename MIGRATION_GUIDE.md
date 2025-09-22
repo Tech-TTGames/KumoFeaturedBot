@@ -42,12 +42,12 @@ async def mycommand(self, interaction: discord.Interaction):
 ### Accessing Configuration
 Before:
 ```python
-config = Config(bot)  # Global config
+config = Config(bot)  # Global config from variables.py
 ```
 
 After:
 ```python
-from variables import Config
+from kumo_bot.config.settings import Config
 config = Config(self.bot)  # In cog methods
 ```
 
@@ -57,9 +57,10 @@ config = Config(self.bot)  # In cog methods
 from variables import EMOJI_ALPHABET, VERSION, Config, Secret, handler, intents
 
 # New imports (use specific modules)
+from kumo_bot.config.constants import VERSION, EMOJI_ALPHABET, handler, intents
+from kumo_bot.config.settings import Config, Secret
 from kumo_bot.utils.checks import vote_running, is_owner
 from kumo_bot.utils.voting import parse_votemsg
-from variables import Config  # Still needed for configuration
 ```
 
 ### Running the Bot

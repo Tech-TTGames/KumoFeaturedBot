@@ -8,7 +8,8 @@ from lncrawl.core import app, sources, proxy
 from lncrawl.binders import available_formats
 from fanficfare import cli, loghandler
 
-from variables import Config, Secret, handler, intents
+from kumo_bot.config.constants import handler, intents
+from kumo_bot.config.settings import Config, Secret
 from kumo_bot import cogs
 
 

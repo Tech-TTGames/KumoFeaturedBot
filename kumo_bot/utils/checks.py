@@ -2,7 +2,7 @@
 import discord
 from discord import app_commands
 
-from variables import Config
+from kumo_bot.config.settings import Config
 
 
 def vote_running():

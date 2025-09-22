@@ -10,6 +10,10 @@ kumo_bot/
 ├── bot.py                   # Main KumoBot class with cog loading
 ├── debug_bot.py             # Debug-specific bot extension
 ├── setup_bot.py             # Setup-specific bot extension
+├── config/                  # Configuration and constants
+│   ├── __init__.py         # Config package initialization
+│   ├── constants.py        # Constants (VERSION, EMOJI_ALPHABET, intents, handler)
+│   └── settings.py         # Configuration classes (Config, Secret)
 ├── cogs/                    # Discord.py cogs for command organization
 │   ├── __init__.py         # Auto-discovery of all cogs
 │   ├── admin.py            # Admin commands (blacklist, override, etc.)
@@ -76,6 +80,20 @@ Event handlers:
 - Error handling for commands
 - Bot ready event processing
 - Vote auto-close functionality
+
+## Configuration Management
+
+### Constants (`kumo_bot/config/constants.py`)
+Centralized constants following Tickets-Plus pattern:
+- `VERSION` - Bot version string
+- `EMOJI_ALPHABET` - Unicode emoji array for voting reactions  
+- `intents` - Discord gateway intents configuration
+- `handler` - Default logging handler configuration
+
+### Settings (`kumo_bot/config/settings.py`)
+Configuration management classes:
+- `Secret` - Manages secret.json file access with token obfuscation
+- `Config` - Comprehensive configuration management with auto-save properties
 
 ## Utility Modules
 
@@ -156,6 +174,7 @@ def start():
 - Configuration system unchanged
 - All three operating modes (prod, debug, setup) maintained
 - Existing config.json and secret.json files work unchanged
+- **NEW**: Variables refactored from `variables.py` into `kumo_bot/config/` structure
 
 ## Adding New Features
 

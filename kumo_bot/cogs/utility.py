@@ -3,7 +3,7 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 
-from variables import VERSION
+from kumo_bot.config.constants import VERSION
 
 
 class UtilityCommands(commands.Cog):
@@ -31,7 +31,7 @@ class UtilityCommands(commands.Cog):
     @commands.is_owner()
     async def configuration(self, interaction: discord.Interaction) -> None:
         """This command is used to check the current configuration of the bot."""
-        from variables import Config
+        from kumo_bot.config.settings import Config
         config = Config(self.bot)
         
         last_vote = await config.lastvote

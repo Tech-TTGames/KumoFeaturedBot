@@ -22,7 +22,7 @@ class AdminCommands(commands.Cog):
     async def blacklist(self, interaction: discord.Interaction,
                         user: discord.User) -> None:
         """This command is used to blacklist a user from voting."""
-        from variables import Config
+        from kumo_bot.config.settings import Config
         config = Config(self.bot)
         
         blacklst = config.blacklist
@@ -49,7 +49,7 @@ class AdminCommands(commands.Cog):
     async def votecountmode(self, interaction: discord.Interaction,
                             mode: app_commands.Choice[int]) -> None:
         """This command is used to configure the vote count mode."""
-        from variables import Config
+        from kumo_bot.config.settings import Config
         config = Config(self.bot)
         config.vote_count_mode = mode.value
 
@@ -63,7 +63,7 @@ class AdminCommands(commands.Cog):
     @is_owner()
     async def override(self, interaction: discord.Interaction, command: str) -> None:
         """This command is used to override the bot's commands."""
-        from variables import Config
+        from kumo_bot.config.settings import Config
         config = Config(self.bot)
         
         await interaction.response.defer(thinking=True)
@@ -120,7 +120,7 @@ class AdminCommands(commands.Cog):
     async def accessrole(self, interaction: discord.Interaction,
                          addrole: discord.Role) -> None:
         """Sets the <addrole> as the bot role."""
-        from variables import Config
+        from kumo_bot.config.settings import Config
         config = Config(self.bot)
         config.role = addrole
 
@@ -133,7 +133,7 @@ class AdminCommands(commands.Cog):
     async def setmention(self, interaction: discord.Interaction,
                          mention: discord.Role) -> None:
         """Sets the <mention> as the mention."""
-        from variables import Config
+        from kumo_bot.config.settings import Config
         config = Config(self.bot)
         config.mention = mention
 
