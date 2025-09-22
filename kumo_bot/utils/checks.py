@@ -38,9 +38,12 @@ def is_owner():
 
 async def predicate_isadmin(interaction: discord.Interaction):
     """The predicate for the is_admin check."""
-    bypass = await predicate_isowner(interaction)
-    if bypass:
-        return True
+    try:
+        bypass = await predicate_isowner(interaction)
+    except app_commands.CheckFailure:
+        pass
+    else:
+        return bypass
     # Check if user has Administrator permission
     if interaction.guild:
         member = interaction.guild.get_member(interaction.user.id)
@@ -59,9 +62,12 @@ def is_operator():
 
     async def predicate(interaction: discord.Interaction):
         # Check if user has the configured admin role
-        bypass = predicate_isadmin(interaction)
-        if bypass:
-            return True
+        try:
+            bypass = await predicate_isadmin(interaction)
+        except app_commands.CheckFailure:
+            pass
+        else:
+            return bypass
         config = interaction.client.config
         try:
             if hasattr(config, "role_id") and config.role_id:
@@ -70,5 +76,6 @@ def is_operator():
                     return True
         except (ValueError, AttributeError):
             pass
+        raise app_commands.CheckFailure("You don't have permission to use this command.")
 
     return app_commands.check(predicate)
