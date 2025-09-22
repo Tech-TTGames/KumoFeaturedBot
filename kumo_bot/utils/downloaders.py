@@ -28,8 +28,8 @@ async def fetch_download(url: str) -> discord.File:
                 cli.dispatch,
                 options,
                 [url],
-                warn=log_stuff.warn,  # type: ignore
-                fail=log_stuff.critical,  # type: ignore
+                warn=cli.logger.warn,
+                fail=cli.logger.critical,
             ),
         )
     except exceptions.UnknownSite:
@@ -48,5 +48,5 @@ async def fetch_download(url: str) -> discord.File:
     if isinstance(filename, str):
         logging.info("Successfully downloaded %s", filename)
         return discord.File(fp=filename)
-    raise Exception(
+    raise NotImplementedError(
         "FanFicFare failed to download. Due to security issues lightnovel-crawler is currently unsupported.")
