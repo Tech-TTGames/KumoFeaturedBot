@@ -1,5 +1,6 @@
 """Main bot class for KumoFeaturedBot."""
 import logging
+import pathlib
 
 import discord
 from discord.ext import commands
@@ -27,6 +28,7 @@ class KumoBot(commands.Bot):
         # Initialize configuration and secrets
         self.config = Config(self)
         self.secret = Secret()
+        self.root = pathlib.Path(__file__).parent.parent
 
         # Set up command prefix from config
         self.command_prefix = self.config.prefix

@@ -46,7 +46,7 @@ class DebugBot(KumoBot):
         async def version(ctx):
             """This command is used to check the current version of the bot."""
             await ctx.send("KumoFeaturedBot " + VERSION +
-                           " by Tech. TTGames#8616 is running."
+                           " by @techttgames is running."
                            "\n*Warning! This bot is currently in debug mode.*")
 
         @self.command(brief="[REDACTED]", description="Tech's admin commands.")

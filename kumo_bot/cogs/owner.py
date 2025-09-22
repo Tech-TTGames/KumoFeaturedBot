@@ -35,8 +35,8 @@ class OwnerCommands(commands.Cog):
 
         elif command == "log":
             logging.info("Sending Log...")
-            dir_path = os.path.dirname(os.path.realpath(__file__))
-            fpath = os.path.join(dir_path, "discord.log")
+            pth = self.bot.root
+            fpath = pth / "discord.log"
             await interaction.user.send(file=discord.File(fp=fpath))
             await interaction.followup.send("Sent!")
 
@@ -87,24 +87,31 @@ class OwnerCommands(commands.Cog):
         democracy = await config.democracy
         readable_config = discord.Embed(
             title="Current Configuration",
-            description=f"Guild: {config.guild}\n"
+            description=f"Mode: {config.mode}\n"
+            f"Guild: {config.guild}\n"
             f"Channel: {config.channel}\n"
-            f"Role: {config.role}\n"
+            f"Bot Operator: {config.role}\n"
             f"Mention: {config.mention}\n"
             f"Last Vote: {last_vote}\n"
             f"Last Win: {last_win}\n"
-            f"Democracy: {democracy}\n"
             f"Vote Running: {config.vote_running}\n"
             f"Close Time: {config.closetime}\n"
-            f"Mode: {config.mode}\n"
             f"Vote Count Mode: {config.vote_count_mode}\n"
             f"Blacklist: {config.blacklist}\n"
             f"Owner Role: {config.owner_role}\n"
             f"Debug Tie: {config.debug_tie}",
             color=0x00ff00,
+        ).add_field(
+            name="Currently Blacklisted",
+            value="\n".join(f"<@{did}>" for did in config.blacklist),
+        ).add_field(
+            name="Current Democracy:tm: Users",
+            value="\n".join([a.mention for a in democracy]),
         )
-        await interaction.response.send_message(embed=readable_config,
-                                                ephemeral=True)
+        await interaction.response.send_message(
+            embed=readable_config,
+            ephemeral=True,
+            allowed_mentions=discord.AllowedMentions.none())
 
 
 async def setup(bot):

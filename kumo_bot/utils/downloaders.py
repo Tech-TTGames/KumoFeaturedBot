@@ -3,7 +3,7 @@ import asyncio
 import functools
 import io
 import logging
-import os
+import pathlib
 import re
 from requests import get
 
@@ -62,18 +62,18 @@ async def fetch_download(url: str, application: app.App,
     await loop.run_in_executor(None, application.prepare_search)
     await loop.run_in_executor(None, application.get_novel_info)
 
-    os.makedirs(application.output_path, exist_ok=True)
+    pt = pathlib.Path(application.output_path)
+    pt.mkdir(exist_ok=True)
     application.chapters = application.crawler.chapters[:]
     logging.info("Downloading cover: %s", application.crawler.novel_cover)
     img = get(application.crawler.novel_cover, timeout=60)
-    with open(os.path.join(application.output_path, "cover.jpg"), "wb") as f:
+    with open(pt / "cover.jpg", "wb") as f:
         f.write(img.content)
-    application.book_cover = os.path.join(application.output_path, "cover.jpg")
+    application.book_cover = str(pt / "cover.jpg")
 
     logging.info("Downloading chapters...")
     await loop.run_in_executor(None, application.start_download)
     await loop.run_in_executor(None, application.bind_books)
     logging.info("Bound books.")
-    filepath = os.path.join(application.output_path, "epub",
-                            application.good_file_name + ".epub")
+    filepath = (pt / "epub" / application.good_file_name).with_suffix(".epub")
     return discord.File(fp=filepath)

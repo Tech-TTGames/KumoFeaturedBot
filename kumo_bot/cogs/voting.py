@@ -92,24 +92,34 @@ class VotingCommands(commands.Cog):
                 "No submissions found in the last 31 days.", ephemeral=True)
             return
 
-        if len(submitted) >= cap:
-            submitted = dict(list(submitted.items())[:cap])
+        submitted = list(submitted.items())
+        shuffle(submitted)
+        if len(submitted) > cap:
+            submitted = submitted[:cap]
         if len(submitted) > len(constants.EMOJI_ALPHABET):
             await interaction.followup.send(
                 "Too many submissions! Please reduce the cap.", ephemeral=True)
             return
 
-        submission_list = []
-        for key, value in submitted.items():
-            emoji = constants.EMOJI_ALPHABET[len(submission_list)]
-            submission_text = f"{emoji} - {key} - {value}"
-            submission_list.append(submission_text)
+        message_lines = []
+        for key, value in submitted:
+            emoji = constants.EMOJI_ALPHABET[len(message_lines)]
+            submitters = ", ".join(value)
+            submission_text = f"{emoji} - <{key}> - {submitters}"
+            message_lines.append(submission_text)
+            if presend:
+                await cha.send(f"{emoji}: {key} Submitted by: {submitters}")
 
-        shuffle(submission_list)
+        message_lines.append(
+            "Vote by reacting with the corresponding letter emoji.")
+        if polltime:
+            timed = discord.utils.utcnow() + datetime.timedelta(hours=polltime)
+            message_lines.append(
+                f"Vote will close <t:{round(timed.timestamp())}:R>.")
 
         embed = discord.Embed(
             title="Vote",
-            description="\n".join(submission_list),
+            description="\n".join(message_lines),
             color=0x00ff00,
         )
 
@@ -126,19 +136,14 @@ class VotingCommands(commands.Cog):
 
         # Set channel for voting
         config.channel = cha
-
-        # Send presend messages if requested
-        if presend:
-            for key in submitted:
-                await cha.send(key)
-
         # Send vote message
         mention_text = role.mention if role else ""
         vote_msg = await cha.send(f"{mention_text} Vote is starting!",
-                                  embed=embed)
-
+                                  embed=embed,
+                                  allowed_mentions=discord.AllowedMentions(
+                                      users=False, everyone=False))
         # Add reactions
-        for i, _ in enumerate(submission_list):
+        for i, _ in enumerate(submitted):
             await vote_msg.add_reaction(constants.EMOJI_ALPHABET[i])
 
         # Pin vote message
@@ -150,7 +155,6 @@ class VotingCommands(commands.Cog):
 
         # Set auto-close if specified
         if polltime > 0:
-            timed = discord.utils.utcnow() + datetime.timedelta(hours=polltime)
             config.closetime = timed
             logging.info("Vote will close at %s", str(timed))
 
@@ -188,9 +192,14 @@ class VotingCommands(commands.Cog):
 
         if hours == 0 and minutes == 0:
             config.closetime = None
-            await interaction.response.send_message("Autoclose disabled.",
-                                                    ephemeral=True)
+            await interaction.response.send_message(
+                "Attempting Autoclose Abort. Reboot to enforce.",
+                ephemeral=True)
         else:
+            if hours == 99:
+                hours = randint(1, 72)
+            if minutes > 59:
+                minutes = randint(0, 59)
             timed = discord.utils.utcnow() + datetime.timedelta(
                 hours=hours, minutes=minutes)
             config.closetime = timed
@@ -208,7 +217,6 @@ class VotingCommands(commands.Cog):
     async def endvote_internal(
             self, interaction: Union[discord.Interaction, str]) -> None:
         """This command is used to end a vote with advanced features."""
-
         config = self.bot.config
         channel = config.channel
         vote: Dict[str, int] = {}
@@ -243,10 +251,8 @@ class VotingCommands(commands.Cog):
         votemsg = await config.lastvote
 
         if votemsg is None:
-            if interaction != "INTERNAL":
-                await interaction.followup.send("Vote message not found.",
-                                                ephemeral=True)
-            return
+            raise app_commands.errors.AppCommandError(
+                "Vote message not found.")
 
         await votemsg.unpin()
         await channel.send(
@@ -402,6 +408,34 @@ class VotingCommands(commands.Cog):
             await dm_channel.send(
                 "Thank You. This concludes the Stalemate Resolution.")
 
+        # Fraud protection report
+        if disregarded:
+            fraport_text = (f"Total disregarded votes: {disreg_total}\n" +
+                            f"Total disregarded users: {len(disregarded)}\n" +
+                            "Disregarded users:\n")
+            for usr in disregarded:
+                if usr in usrlib:
+                    fraport_text += (
+                        f"{usr.mention} - {usrlib[usr]} message{'s'[:usrlib[usr] ^ 1]}\n"
+                    )
+                elif usr.id in config.blacklist:
+                    fraport_text += f"{usr.mention} - Blacklisted\n"
+                else:
+                    fraport_text += f"{usr.mention} - 0 messages\n"
+            fraprot = discord.Embed(title="Fraud Protection Log",
+                                    description=fraport_text,
+                                    color=0xFC0303)
+            fraprot.set_footer(text="This is a public safety announcement.")
+        else:
+            fraprot = discord.Embed(
+                title="Fraud Protection Log",
+                description="No users were disregarded.",
+                color=0x00FFF7,
+            )
+            fraprot.set_footer(text="Thank you for your cooperation.")
+
+        await channel.send(embed=fraprot)
+
         # Try to download winner's file
         try:
             downed = await asyncio.wait_for(downloaders.fetch_download(
@@ -438,37 +472,8 @@ class VotingCommands(commands.Cog):
         await message.add_reaction("🎉")
         await message.pin()
 
-        # Fraud protection report
-        if disregarded:
-            fraport_text = (f"Total disregarded votes: {disreg_total}\n" +
-                            f"Total disregarded users: {len(disregarded)}\n" +
-                            "Disregarded users:\n")
-            for usr in disregarded:
-                if usr in usrlib:
-                    fraport_text += (
-                        f"{usr.mention} - {usrlib[usr]} message{'s'[:usrlib[usr] ^ 1]}\n"
-                    )
-                elif usr.id in config.blacklist:
-                    fraport_text += f"{usr.mention} - Blacklisted\n"
-                else:
-                    fraport_text += f"{usr.mention} - 0 messages\n"
-            fraprot = discord.Embed(title="Fraud Protection Log",
-                                    description=fraport_text,
-                                    color=0xFC0303)
-            fraprot.set_footer(text="This is a public safety announcement.")
-        else:
-            fraprot = discord.Embed(
-                title="Fraud Protection Log",
-                description="No users were disregarded.",
-                color=0x00FFF7,
-            )
-            fraprot.set_footer(text="This is a public safety announcement.")
-
-        await channel.send(embed=fraprot)
-
         # Update configuration
         config.lastwin = message
-        config.lastvote = votemsg
         config.vote_running = False
         config.closetime = None
         self.double_clause = False

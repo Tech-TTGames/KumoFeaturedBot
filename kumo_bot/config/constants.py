@@ -9,7 +9,7 @@ from logging.handlers import RotatingFileHandler
 import discord
 
 # Bot version
-VERSION = "v1.2.1.0"
+VERSION = "v1.3.0.0a1"
 
 # Unicode emoji alphabet for reactions
 EMOJI_ALPHABET = [
@@ -43,8 +43,8 @@ EMOJI_ALPHABET = [
 
 # Discord intents configuration
 intents = discord.Intents.default()
-intents.message_content = True  # pylint: disable=assigning-non-slot
-intents.messages = True  # pylint: disable=assigning-non-slot
+intents.message_content = True
+intents.messages = True
 
 # Default logging handler
 handler = RotatingFileHandler(filename="discord.log",

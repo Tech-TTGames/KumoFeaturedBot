@@ -31,17 +31,14 @@ class AdminCommands(commands.Cog):
     async def version(self, interaction: discord.Interaction) -> None:
         """This command is used to check the current version of the bot."""
         await interaction.response.send_message(
-            f"KumoFeaturedBot {constants.VERSION} by Tech. TTGames#8616 is running."
-        )
+            f"KumoFeaturedBot {constants.VERSION} by @techttgames is running.")
 
     @app_commands.command(name="blacklist", description="Blacklists a user.")
-    @checks.is_owner()
+    @checks.is_operator()
     async def blacklist(self, interaction: discord.Interaction,
                         user: discord.User) -> None:
         """This command is used to blacklist a user from voting."""
-        config = self.bot.config
-
-        blacklst = config.blacklist
+        blacklst = self.bot.config.blacklist
         if user.id in blacklst:
             blacklst.remove(user.id)
             await interaction.response.send_message(
@@ -50,7 +47,6 @@ class AdminCommands(commands.Cog):
             blacklst.append(user.id)
             await interaction.response.send_message(
                 f"User {user.mention} blacklisted.", ephemeral=True)
-        config.blacklist = blacklst
 
     @app_commands.command(name="votecountmode",
                           description="Sets the vote count mode.")
@@ -84,7 +80,7 @@ class AdminCommands(commands.Cog):
             f"Role {addrole} has been set as to have access.", ephemeral=True)
 
     @app_commands.command(name="setmention", description="Sets mention.")
-    @checks.is_operator()
+    @checks.is_admin()
     @app_commands.describe(mention="Role to be set as mention.")
     async def setmention(self, interaction: discord.Interaction,
                          mention: discord.Role) -> None:
@@ -95,7 +91,7 @@ class AdminCommands(commands.Cog):
             f"Role {mention} has been set to be mentioned.", ephemeral=True)
 
     @app_commands.command(name="pinops", description="Pin operations.")
-    @checks.is_operator()
+    @checks.is_admin()
     @app_commands.describe(pind="ID of the message to be pinned/unpinned.")
     async def pinops(self, interaction: discord.Interaction,
                      pind: str) -> None:
