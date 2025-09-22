@@ -36,7 +36,7 @@ class Config:
         with open(self._file, encoding="utf-8") as config_f:
             self._config = json.load(config_f)
         self._bt = bot
-        self.closetime_timestamp = self._config["closetime"]
+        self.closetime_timestamp = self._config.get("closetime", None)
 
     def __dict__(self) -> dict:
         return self._config
@@ -52,7 +52,7 @@ class Config:
     @property
     def mode(self) -> str:
         """Gets current mode"""
-        return self._config["mode"]
+        return self._config.get("mode", "debug")
 
     @mode.setter
     def mode(self, mode: str) -> None:
@@ -62,7 +62,7 @@ class Config:
     @property
     def prefix(self) -> str:
         """Gets current prefix"""
-        return self._config["prefix"]
+        return self._config.get("prefix", ".")
 
     @prefix.setter
     def prefix(self, prefix: str) -> None:
