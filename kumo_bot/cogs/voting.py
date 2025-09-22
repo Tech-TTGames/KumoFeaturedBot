@@ -385,7 +385,7 @@ class VotingCommands(commands.Cog):
             downed = await asyncio.wait_for(downloaders.fetch_download(
                 submitted[constants.EMOJI_ALPHABET.index(win_id)][0]),
                                             timeout=1200)
-        except Exception as e: # pylint: disable=broad-exception-caught
+        except Exception as e:  # pylint: disable=broad-exception-caught
             logging.warning("Failed to download winner. %s Error Stack:\n", e, exc_info=True)
             downed = None
 
