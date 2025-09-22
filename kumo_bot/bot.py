@@ -32,6 +32,7 @@ class KumoBot(commands.Bot):
         self.command_prefix = self.config.prefix
 
         # Set up logging
+        self.l_handler = handler
         handler.setLevel(logging.INFO)
         loghandler.setLevel(logging.CRITICAL)
         log_stuff = cli.logger
@@ -39,9 +40,9 @@ class KumoBot(commands.Bot):
 
         # Set up lightnovel crawler
         sources.load_sources()
-        self.application = app.App()
-        self.application.no_suffix_after_filename = True
-        self.application.output_formats = {
+        self.lnc_app = app.App()
+        self.lnc_app.no_suffix_after_filename = True
+        self.lnc_app.output_formats = {
             x: (x in ["epub", "json"])
             for x in available_formats
         }

@@ -11,9 +11,7 @@ from discord import app_commands
 from discord.ext import commands
 
 from kumo_bot.config import constants
-from kumo_bot.config.settings import Config
-from kumo_bot.utils import checks, voting
-from kumo_bot.utils.voting import parse_votemsg
+from kumo_bot.utils import checks, voting, downloaders
 
 
 class VotingCommands(commands.Cog):
@@ -155,10 +153,10 @@ class VotingCommands(commands.Cog):
             timed = discord.utils.utcnow() + datetime.timedelta(hours=polltime)
             config.closetime = timed
             logging.info("Vote will close at %s", str(timed))
-            
+
             await interaction.followup.send(f"Vote started in {cha.mention}!",
                                             ephemeral=True)
-            
+
             # Wait for the timer and then close
             await discord.utils.sleep_until(timed)
             logging.info("Closing vote in %s due to poll-time end.", str(cha))
@@ -193,12 +191,8 @@ class VotingCommands(commands.Cog):
             await interaction.response.send_message("Autoclose disabled.",
                                                     ephemeral=True)
         else:
-            if hours == 99:
-                hours = randint(1, 72)
-            if minutes > 59:
-                minutes = randint(0, 59)
-            
-            timed = discord.utils.utcnow() + datetime.timedelta(hours=hours, minutes=minutes)
+            timed = discord.utils.utcnow() + datetime.timedelta(
+                hours=hours, minutes=minutes)
             config.closetime = timed
 
             await interaction.response.send_message(
@@ -214,27 +208,27 @@ class VotingCommands(commands.Cog):
     async def endvote_internal(
             self, interaction: Union[discord.Interaction, str]) -> None:
         """This command is used to end a vote with advanced features."""
-        from kumo_bot.utils.downloaders import fetch_download
-        
+
         config = self.bot.config
         channel = config.channel
         vote: Dict[str, int] = {}
-        usrlib: Dict[Union[discord.Member, discord.User], Union[int, float]] = {}
+        usrlib: Dict[Union[discord.Member, discord.User], Union[int,
+                                                                float]] = {}
         disregarded: List[Union[discord.Member, discord.User]] = []
         disreg_votes: Dict[str, List[int]] = {}
         disreg_total: int = 0
         disreg_reqs: int = 15
-        
+
         if not config.vote_running:
             logging.info("Vote already closed.")
             return
-            
+
         # Prevent double closing
         if self.double_clause:
             logging.info("Double closing attempted.")
             return
         self.double_clause = True
-        
+
         if config.vote_count_mode == 2:
             disreg_reqs = randint(10, 25)
         role = config.mention
@@ -250,14 +244,17 @@ class VotingCommands(commands.Cog):
 
         if votemsg is None:
             if interaction != "INTERNAL":
-                await interaction.followup.send("Vote message not found.", ephemeral=True)
+                await interaction.followup.send("Vote message not found.",
+                                                ephemeral=True)
             return
-            
+
         await votemsg.unpin()
-        await channel.send("Gathering votes and applying fraud protection... (This may take a while)")
+        await channel.send(
+            "Gathering votes and applying fraud protection... (This may take a while)"
+        )
 
         async with channel.typing():
-            submitted = parse_votemsg(votemsg)
+            submitted = voting.parse_votemsg(votemsg)
 
             start_time = votemsg.created_at
             if config.vote_count_mode == 1:
@@ -265,8 +262,10 @@ class VotingCommands(commands.Cog):
                 start_time = discord.utils.utcnow()
             timed = start_time - datetime.timedelta(days=31)
 
-            async for message in channel.history(after=timed, before=start_time,
-                                               oldest_first=True, limit=None):
+            async for message in channel.history(after=timed,
+                                                 before=start_time,
+                                                 oldest_first=True,
+                                                 limit=None):
                 if message.author not in usrlib:
                     usrlib[message.author] = 1
                 else:
@@ -292,24 +291,30 @@ class VotingCommands(commands.Cog):
                                 disregarded.append(user)
                             disreg_total += 1
                             continue
-                        
+
                         user_messages = usrlib[user]
                         if user_messages >= disreg_reqs:
                             vote[reaction.emoji] += 1
                         else:
                             if user not in disregarded:
                                 disregarded.append(user)
-                            disreg_votes[reaction.emoji][int(user_messages)] += 1
+                            disreg_votes[reaction.emoji][int(
+                                user_messages)] += 1
                             disreg_total += 1
 
         # Create results message
         msg_text = "This week's featured results are:\n"
         for i in range(len(vote)):
-            msg_text += (f"{constants.EMOJI_ALPHABET[i]} - {vote[constants.EMOJI_ALPHABET[i]]} vote" +
-                        f"{'s'[:vote[constants.EMOJI_ALPHABET[i]] ^ 1]}\n")
+            msg_text += (
+                f"{constants.EMOJI_ALPHABET[i]} - {vote[constants.EMOJI_ALPHABET[i]]} vote"
+                + f"{'s'[:vote[constants.EMOJI_ALPHABET[i]] ^ 1]}\n")
 
-        results_embed = discord.Embed(title="RESULTS", description=msg_text, color=0x00FF00)
-        await channel.send(embed=results_embed, reference=votemsg, mention_author=False)
+        results_embed = discord.Embed(title="RESULTS",
+                                      description=msg_text,
+                                      color=0x00FF00)
+        await channel.send(embed=results_embed,
+                           reference=votemsg,
+                           mention_author=False)
 
         # Advanced tie resolution
         max_vote = max(vote.values())
@@ -319,7 +324,7 @@ class VotingCommands(commands.Cog):
 
         # Advanced tie-breaking logic
         if len(win_candidates) > 1:
-            for i in range(disreg_reqs-1, -1, -1):
+            for i in range(disreg_reqs - 1, -1, -1):
                 lvl_vals = {c: disreg_votes[c][i] for c in win_candidates}
                 cap = max(lvl_vals.values())
                 for c, v in lvl_vals.items():
@@ -352,54 +357,70 @@ class VotingCommands(commands.Cog):
                 title="Stalemate Resolution Associate Response Required",
                 color=discord.Color.red(),
             )
-            tiebreak_confirm.add_field(name="Current Resolution", 
-                                     value=f"Winner: {win_id}\nMethod: {tiebreak}")
+            tiebreak_confirm.add_field(
+                name="Current Resolution",
+                value=f"Winner: {win_id}\nMethod: {tiebreak}")
             candidate_data = []
             for candidate in win_candidates:
                 base_str = f"{candidate} - DISREG VOTES:"
                 for level, data in enumerate(disreg_votes[candidate]):
                     base_str += f"\n{level} - {data}"
                 candidate_data.append(base_str)
-            tiebreak_confirm.add_field(name="Candidates", value="\n".join(candidate_data))
-            tiebreak_confirm.set_footer(text="Awaiting Stalemate Resolution Associate Response...")
+            tiebreak_confirm.add_field(name="Candidates",
+                                       value="\n".join(candidate_data))
+            tiebreak_confirm.set_footer(
+                text="Awaiting Stalemate Resolution Associate Response...")
             await dm_channel.send(embed=tiebreak_confirm)
-            
+
             resolution = await self.bot.wait_for("message", check=dm_from_user)
             if resolution.content.lower() == "override":
-                await dm_channel.send("Overriding Resolution. Please enter override winner")
+                await dm_channel.send(
+                    "Overriding Resolution. Please enter override winner")
                 while True:
-                    winner_override = await self.bot.wait_for("message", check=dm_from_user)
+                    winner_override = await self.bot.wait_for(
+                        "message", check=dm_from_user)
                     if winner_override.content.strip() in win_candidates:
                         win_id = winner_override.content.strip()
                         break
-                    await dm_channel.send("Please respond with solely an emoji from win candidates.")
-                await dm_channel.send("Thank You. Please enter stalemate solution (1, 2 or 3).")
+                    await dm_channel.send(
+                        "Please respond with solely an emoji from win candidates."
+                    )
+                await dm_channel.send(
+                    "Thank You. Please enter stalemate solution (1, 2 or 3).")
                 while True:
-                    tiebreak_inf = await self.bot.wait_for("message", check=dm_from_user)
+                    tiebreak_inf = await self.bot.wait_for("message",
+                                                           check=dm_from_user)
                     if tiebreak_inf.content.isnumeric():
                         if int(tiebreak_inf.content) in [1, 2, 3]:
                             tiebreak = int(tiebreak_inf.content)
                             break
-                    await dm_channel.send("Please respond with solely a number between 1 and 3.")
+                    await dm_channel.send(
+                        "Please respond with solely a number between 1 and 3.")
             else:
-                await dm_channel.send("Automatic Stalemate Resolution Confirmed.")
-            await dm_channel.send("Thank You. This concludes the Stalemate Resolution.")
+                await dm_channel.send(
+                    "Automatic Stalemate Resolution Confirmed.")
+            await dm_channel.send(
+                "Thank You. This concludes the Stalemate Resolution.")
 
         # Try to download winner's file
         try:
-            downed = await asyncio.wait_for(
-                fetch_download(submitted[constants.EMOJI_ALPHABET.index(win_id)][0]), 
-                timeout=1200
-            )
+            downed = await asyncio.wait_for(downloaders.fetch_download(
+                submitted[constants.EMOJI_ALPHABET.index(win_id)][0],
+                self.bot.lnc_app, self.bot.l_handler),
+                                            timeout=1200)
         except Exception as e:
-            logging.warning("Failed to download winner. %s Error Stack:\n", e, exc_info=True)
+            logging.warning("Failed to download winner. %s Error Stack:\n",
+                            e,
+                            exc_info=True)
             downed = None
 
         # Create winner announcement
-        message_txt = (f"{role.mention} This week's featured results are in!\n" +
-                      f"The winner is {submitted[constants.EMOJI_ALPHABET.index(win_id)][0]}" +
-                      f" submitted by {submitted[constants.EMOJI_ALPHABET.index(win_id)][1]}" +
-                      f" with {vote[win_id]} vote{'s'[:vote[win_id] ^ 1]}!")
+        message_txt = (
+            f"{role.mention} This week's featured results are in!\n" +
+            f"The winner is {submitted[constants.EMOJI_ALPHABET.index(win_id)][0]}"
+            +
+            f" submitted by {submitted[constants.EMOJI_ALPHABET.index(win_id)][1]}"
+            + f" with {vote[win_id]} vote{'s'[:vote[win_id] ^ 1]}!")
 
         if tiebreak == 1:
             message_txt += "\n\n(Stalemate Resolution Rule 1: Highest disregarded votes)"
@@ -420,8 +441,8 @@ class VotingCommands(commands.Cog):
         # Fraud protection report
         if disregarded:
             fraport_text = (f"Total disregarded votes: {disreg_total}\n" +
-                           f"Total disregarded users: {len(disregarded)}\n" +
-                           "Disregarded users:\n")
+                            f"Total disregarded users: {len(disregarded)}\n" +
+                            "Disregarded users:\n")
             for usr in disregarded:
                 if usr in usrlib:
                     fraport_text += (
@@ -432,8 +453,8 @@ class VotingCommands(commands.Cog):
                 else:
                     fraport_text += f"{usr.mention} - 0 messages\n"
             fraprot = discord.Embed(title="Fraud Protection Log",
-                                   description=fraport_text,
-                                   color=0xFC0303)
+                                    description=fraport_text,
+                                    color=0xFC0303)
             fraprot.set_footer(text="This is a public safety announcement.")
         else:
             fraprot = discord.Embed(
@@ -447,7 +468,7 @@ class VotingCommands(commands.Cog):
 
         # Update configuration
         config.lastwin = message
-        config.lastvote = None
+        config.lastvote = votemsg
         config.vote_running = False
         config.closetime = None
         self.double_clause = False
@@ -456,7 +477,8 @@ class VotingCommands(commands.Cog):
             await interaction.followup.send("Vote ended.", ephemeral=True)
 
         self.double_clause = False
-        logging.info("Vote ended by %s. Winner: %s", oper, winner_url)
+        logging.info("Vote ended by %s. Winner: %s", oper,
+                     submitted[constants.EMOJI_ALPHABET.index(win_id)][0])
 
 
 async def setup(bot):
