@@ -9,7 +9,7 @@ from logging.handlers import RotatingFileHandler
 import discord
 
 # Bot version
-VERSION = "v1.3.0.0a1"
+VERSION = "v1.3.0.0a2"
 
 # Unicode emoji alphabet for reactions
 EMOJI_ALPHABET = [
