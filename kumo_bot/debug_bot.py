@@ -45,7 +45,8 @@ class DebugBot(KumoBot):
     async def override(self, ctx, command: str = commands.parameter(default=None, description="Command")):
         """Various commands for testing."""
         if command is None:
-            await ctx.send("Available commands: testget, reboot, testhistory, testhist, pull, set")
+            await ctx.send("Available commands: testget, reboot, testhistory, testhist, pull, set\n"
+                          "For emergency config editing, use `/edit_config` slash command.")
             return
 
         config = self.config
@@ -168,6 +169,151 @@ class DebugBot(KumoBot):
         except commands.ExtensionError as e:
             logging.error("Failed to load extension %s: %s", module, e)
             await interaction.response.send_message(f"Failed to load extension {module}.\nError: {e}", ephemeral=True)
+
+    @app_commands.command(description="Emergency config editor for debug mode")
+    @app_commands.describe(
+        setting="Config setting to edit (guild, channel, lastvote, lastwin, voterunning, closetime, mention)",
+        value="Value to set (message ID for lastvote/lastwin, true/false for voterunning, etc.)"
+    )
+    @checks.is_owner()
+    async def edit_config(self, interaction: discord.Interaction, setting: str, value: str = None):
+        """Emergency configuration editor for debug mode."""
+        await interaction.response.defer(ephemeral=True)
+        
+        config = self.config
+        
+        try:
+            if setting == "guild":
+                gld = interaction.guild
+                if gld:
+                    config.guild = gld
+                    await interaction.followup.send(f"Guild set to: {gld.name} (ID: {gld.id})")
+                else:
+                    await interaction.followup.send("This command must be used in a guild.")
+                    
+            elif setting == "channel":
+                chn = interaction.channel
+                config.channel = chn
+                await interaction.followup.send(f"Channel set to: {chn.mention} (ID: {chn.id})")
+                
+            elif setting == "lastvote":
+                if value is None:
+                    await interaction.followup.send("Message ID required for lastvote")
+                    return
+                try:
+                    message_id = int(value)
+                    lastvote_msg = await config.channel.fetch_message(message_id)
+                    config.lastvote = lastvote_msg.id
+                    await interaction.followup.send(f"Last vote set to message ID: {message_id}")
+                except (ValueError, discord.NotFound) as e:
+                    await interaction.followup.send(f"Invalid message ID or message not found: {e}")
+                    
+            elif setting == "lastwin":
+                if value is None:
+                    await interaction.followup.send("Message ID required for lastwin")
+                    return
+                try:
+                    message_id = int(value)
+                    lastwin_msg = await config.channel.fetch_message(message_id)
+                    config.lastwin = lastwin_msg.id
+                    await interaction.followup.send(f"Last win set to message ID: {message_id}")
+                except (ValueError, discord.NotFound) as e:
+                    await interaction.followup.send(f"Invalid message ID or message not found: {e}")
+                    
+            elif setting == "voterunning":
+                if value is None:
+                    await interaction.followup.send("Value required for voterunning (true/false)")
+                    return
+                vote_status = value.lower() in ["true", "1", "yes", "on"]
+                config.vote_running = vote_status
+                await interaction.followup.send(f"Vote running set to: {vote_status}")
+                
+            elif setting == "closetime":
+                if value is None:
+                    # Clear closetime
+                    config.closetime = None
+                    await interaction.followup.send("Close time cleared")
+                else:
+                    try:
+                        timestamp = int(value)
+                        config.closetime = timestamp
+                        readable_time = discord.utils.format_dt(discord.utils.snowflake_time(timestamp))
+                        await interaction.followup.send(f"Close time set to: {readable_time}")
+                    except ValueError:
+                        await interaction.followup.send("Invalid timestamp for closetime")
+                        
+            elif setting == "mention":
+                if value is None:
+                    config.mention = None
+                    await interaction.followup.send("Mention role cleared")
+                else:
+                    try:
+                        role_id = int(value)
+                        role = interaction.guild.get_role(role_id)
+                        if role:
+                            config.mention = role.id
+                            await interaction.followup.send(f"Mention role set to: {role.name}")
+                        else:
+                            await interaction.followup.send("Role not found")
+                    except ValueError:
+                        await interaction.followup.send("Invalid role ID")
+                        
+            else:
+                available_settings = ["guild", "channel", "lastvote", "lastwin", "voterunning", "closetime", "mention"]
+                await interaction.followup.send(f"Unknown setting: {setting}\n"
+                                               f"Available settings: {', '.join(available_settings)}")
+                
+        except Exception as e:
+            logging.error("Error in edit_config: %s", e, exc_info=True)
+            await interaction.followup.send(f"Error updating config: {e}")
+
+    @app_commands.command(description="Show current config status for debugging")
+    @checks.is_owner()
+    async def config_status(self, interaction: discord.Interaction):
+        """Show current configuration status for debugging."""
+        await interaction.response.defer(ephemeral=True)
+        
+        config = self.config
+        
+        try:
+            status = "**Current Configuration Status:**\n"
+            status += f"Mode: `{config.mode}`\n"
+            status += f"Guild: `{config.guild.name if config.guild else 'Not set'}` (ID: {config.guild.id if config.guild else 'N/A'})\n"
+            status += f"Channel: `{config.channel.name if config.channel else 'Not set'}` (ID: {config.channel.id if config.channel else 'N/A'})\n"
+            status += f"Vote Running: `{config.vote_running}`\n"
+            status += f"Vote Count Mode: `{config.vote_count_mode}`\n"
+            status += f"Debug Tie: `{config.debug_tie}`\n"
+            
+            if config.lastvote:
+                status += f"Last Vote: Message ID `{config.lastvote}`\n"
+            else:
+                status += "Last Vote: `Not set`\n"
+                
+            if config.lastwin:
+                status += f"Last Win: Message ID `{config.lastwin}`\n"
+            else:
+                status += "Last Win: `Not set`\n"
+                
+            if config.closetime:
+                readable_time = discord.utils.format_dt(discord.utils.snowflake_time(config.closetime))
+                status += f"Close Time: {readable_time}\n"
+            else:
+                status += "Close Time: `Not set`\n"
+                
+            if config.mention:
+                mention_role = interaction.guild.get_role(config.mention) if interaction.guild else None
+                status += f"Mention Role: `{mention_role.name if mention_role else 'Role not found'}` (ID: {config.mention})\n"
+            else:
+                status += "Mention Role: `Not set`\n"
+                
+            blacklist_count = len(config.blacklist) if hasattr(config, 'blacklist') else 0
+            status += f"Blacklist: `{blacklist_count} users`\n"
+            
+            await interaction.followup.send(status)
+            
+        except Exception as e:
+            logging.error("Error in config_status: %s", e, exc_info=True)
+            await interaction.followup.send(f"Error retrieving config status: {e}")
 
     @commands.command()
     @commands.dm_only()

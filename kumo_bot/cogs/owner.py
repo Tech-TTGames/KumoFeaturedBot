@@ -68,6 +68,81 @@ class OwnerCommands(commands.Cog):
             config.debug_tie = not config.debug_tie
             logging.info("Debug Tie toggled: %s", config.debug_tie)
             await interaction.followup.send(f"Debug Tie toggled: {config.debug_tie}")
+            
+        elif command == "testget":
+            # Test submission gathering functionality (send results via DM)
+            submitted = []
+            submitees = []
+            channel = config.channel
+            
+            try:
+                from datetime import timedelta
+                timed = discord.utils.utcnow() - timedelta(days=31)
+                async for message in channel.history(after=timed, limit=None):
+                    if (message.content.startswith("https://") and message.author not in submitees):
+                        import re
+                        url = re.search(r"(?P<url>https?://\S+)", message.content)
+                        if url not in submitted and url is not None:
+                            submitted.append(str(url.group("url")))
+                            submitees.append(message.author)
+                submitted = list(dict.fromkeys(submitted))
+                
+                result = f"Found {len(submitted)} submissions:\n" + "\n".join(submitted[:20])  # Limit to first 20
+                await interaction.user.send(result)
+                await interaction.followup.send(f"Test completed. Found {len(submitted)} submissions. Results sent via DM.")
+                logging.debug("Test Gathering results: %s", submitted)
+                
+            except Exception as e:
+                await interaction.followup.send(f"Error during testget: {e}")
+                logging.error("Error in testget: %s", e, exc_info=True)
+                
+        elif command == "testhistory":
+            # Test vote history and user activity analysis
+            try:
+                from kumo_bot.config.constants import EMOJI_ALPHABET
+                from datetime import timedelta
+                
+                usrlib = {}
+                vote = {}
+                channel = config.channel
+                votemsg = await config.lastvote
+                timed = discord.utils.utcnow() - timedelta(days=31)
+
+                # Count user activity
+                async for message in channel.history(after=timed, limit=None):
+                    if message.author not in usrlib:
+                        usrlib[message.author] = 1
+                    else:
+                        usrlib[message.author] += 1
+
+                # Analyze last vote if exists
+                if votemsg:
+                    for reaction in votemsg.reactions:
+                        if reaction.emoji in EMOJI_ALPHABET:
+                            vote[reaction.emoji] = 0
+                            async for user in reaction.users():
+                                if user != self.bot.user and user in usrlib:
+                                    # Check if user meets activity threshold
+                                    if usrlib[user] >= 5:
+                                        vote[reaction.emoji] += 1
+                else:
+                    vote = "No vote message found."
+
+                result = "User activity analysis:\n"
+                result += f"Active users (5+ messages): {len([u for u, c in usrlib.items() if c >= 5])}\n"
+                result += f"Total users: {len(usrlib)}\n"
+                if isinstance(vote, dict):
+                    result += f"Vote results: {vote}"
+                else:
+                    result += str(vote)
+
+                await interaction.user.send(result)
+                await interaction.followup.send("Test completed. Results sent via DM.")
+                logging.debug("Test History results: %s", vote)
+                
+            except Exception as e:
+                await interaction.followup.send(f"Error during testhistory: {e}")
+                logging.error("Error in testhistory: %s", e, exc_info=True)
         else:
             await interaction.followup.send("Invalid override command.")
 
