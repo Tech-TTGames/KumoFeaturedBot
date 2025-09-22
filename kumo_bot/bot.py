@@ -20,10 +20,8 @@ class KumoBot(commands.Bot):
             command_prefix=commands.when_mentioned,
             intents=intents,
             status=discord.Status.online,
-            activity=discord.Activity(
-                type=discord.ActivityType.watching,
-                name="for voter fraud."
-            ),
+            activity=discord.Activity(type=discord.ActivityType.watching,
+                                      name="for voter fraud."),
         )
 
         # Initialize configuration and secrets

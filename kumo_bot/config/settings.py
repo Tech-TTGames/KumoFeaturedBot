@@ -222,7 +222,8 @@ class Config:
             for id_ in ids:
                 member = self.guild.get_member(id_)
                 if member is None:
-                    democracy_members.append(await self.guild.fetch_member(id_))
+                    democracy_members.append(await
+                                             self.guild.fetch_member(id_))
                 elif member is discord.Member:
                     democracy_members.append(member)
             return democracy_members

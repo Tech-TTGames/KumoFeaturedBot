@@ -10,8 +10,8 @@ def get_mode():
     """Determine which mode to run the bot in."""
     try:
         with open("config.json", encoding="utf-8") as f:
-            mode = json.load(f)["mode"]
-        return mode
+            bmode = json.load(f)["mode"]
+        return bmode
     except FileNotFoundError:
         logging.critical("config.json not found. Entering setup mode.")
         return "setup"
@@ -20,16 +20,17 @@ def get_mode():
         return "setup"
 
 
-def start_bot():
-    """Start the appropriate bot based on the mode."""
+if __name__ == "__main__":
     mode = get_mode()
 
     if mode == "debug":
         from kumo_bot.debug_bot import DebugBot
+
         bot = DebugBot()
         bot.run_bot()
     elif mode == "prod":
         from kumo_bot.bot import KumoBot
+
         os.environ["use_proxy"] = "auto"
         proxy.start_proxy_fetcher()
         try:
@@ -39,10 +40,8 @@ def start_bot():
             proxy.stop_proxy_fetcher()
     else:
         from kumo_bot.setup_bot import SetupBot
-        logging.critical("Invalid or not found mode in config.json. Entering setup mode.")
+
+        logging.critical(
+            "Invalid or not found mode in config.json. Entering setup mode.")
         bot = SetupBot()
         bot.run_bot()
-
-
-if __name__ == "__main__":
-    start_bot()

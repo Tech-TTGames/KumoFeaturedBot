@@ -47,10 +47,8 @@ intents.message_content = True  # pylint: disable=assigning-non-slot
 intents.messages = True  # pylint: disable=assigning-non-slot
 
 # Default logging handler
-handler = RotatingFileHandler(
-    filename="discord.log",
-    encoding="utf-8",
-    mode="w",
-    backupCount=10,
-    maxBytes=100000
-)
+handler = RotatingFileHandler(filename="discord.log",
+                              encoding="utf-8",
+                              mode="w",
+                              backupCount=10,
+                              maxBytes=100000)

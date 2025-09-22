@@ -21,21 +21,23 @@ class SetupBot(commands.Bot):
 
     def add_setup_commands(self):
         """Add setup-specific commands."""
+
         @self.event
         async def on_ready():
             """This event is called when the bot is ready to be used."""
             logging.info("%s has connected to Discord!", str(self.user))
 
-        @self.command(brief="Start setup.", description="Starts the setup process.")
-        @commands.check_any(commands.has_permissions(administrator=True), commands.is_owner())
+        @self.command(brief="Start setup.",
+                      description="Starts the setup process.")
+        @commands.check_any(commands.has_permissions(administrator=True),
+                            commands.is_owner())
         async def setup(ctx):
             """Starts the setup process."""
             await ctx.send(f"Starting setup of KumoFeaturedBot {VERSION}...")
             confi: Dict[str, Any] = {"mode": "prod"}
             message = await ctx.author.send(
                 "Hello! I'm going to ask you a few questions to get started."
-                " Use 'cancel' anytime to cancel the setup process."
-            )
+                " Use 'cancel' anytime to cancel the setup process.")
             dm_channel = message.channel
 
             def dm_from_user(msg):
@@ -64,8 +66,7 @@ class SetupBot(commands.Bot):
                     if guild is None:
                         await dm_channel.send(
                             "That is not a valid Guild ID or I am not present there. "
-                            "Please try again."
-                        )
+                            "Please try again.")
                     else:
                         confi["guild"] = guild.id
                         await dm_channel.send(f"Guild set to {guild.name}.")
@@ -89,11 +90,11 @@ class SetupBot(commands.Bot):
                     if channel is None or channel.guild.id != confi["guild"]:
                         await dm_channel.send(
                             "That is not a valid Channel ID or is not in the specified guild. "
-                            "Please try again."
-                        )
+                            "Please try again.")
                     else:
                         confi["channel"] = channel.id
-                        await dm_channel.send(f"Channel set to {channel.name}.")
+                        await dm_channel.send(f"Channel set to {channel.name}."
+                                              )
                         break
                 else:
                     await dm_channel.send(
@@ -114,8 +115,7 @@ class SetupBot(commands.Bot):
                     if role is None:
                         await dm_channel.send(
                             "That is not a valid Role ID in the specified guild. "
-                            "Please try again."
-                        )
+                            "Please try again.")
                     else:
                         confi["role"] = role.id
                         await dm_channel.send(f"Role set to {role.name}.")

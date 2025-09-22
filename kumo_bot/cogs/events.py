@@ -42,7 +42,8 @@ class Events(commands.Cog):
 
         elif isinstance(error, app_commands.MissingRole):
             await ctx.response.send_message(
-                "You are missing the role to run this command.", ephemeral=True)
+                "You are missing the role to run this command.",
+                ephemeral=True)
 
         else:
             logging.exception(
@@ -55,8 +56,8 @@ class Events(commands.Cog):
     @commands.Cog.listener()
     async def on_ready(self):
         """This event is called when the bot is ready to be used."""
-        from kumo_bot.config.settings import Config
-        config = Config(self.bot)
+        config = self.bot.config
+        cg = self.bot.get_cog("VotingCommands")
 
         logging.info("%s has connected to Discord!", str(self.bot.user))
         if config.armed:
@@ -66,9 +67,7 @@ class Events(commands.Cog):
             logging.info("Resuming vote at %s", config.closetime)
             await discord.utils.sleep_until(config.closetime)
             logging.info("Closing vote via INTERNAL event.")
-            # Import here to avoid circular imports
-            from kumo_bot.cogs.voting import endvote_internal
-            await endvote_internal("INTERNAL")
+            await cg.endvote_internal("INTERNAL")
         config.armed = True
 
 

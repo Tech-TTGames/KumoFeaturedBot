@@ -7,7 +7,7 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 
-from kumo_bot.utils.checks import is_owner
+from kumo_bot.utils import checks
 
 
 class OwnerCommands(commands.Cog):
@@ -16,13 +16,14 @@ class OwnerCommands(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @app_commands.command(name="override", description="Tech's admin commands.")
+    @app_commands.command(name="override",
+                          description="Tech's admin commands.")
     @app_commands.describe(command="Command to use.")
-    @is_owner()
-    async def override(self, interaction: discord.Interaction, command: str) -> None:
+    @checks.is_owner()
+    async def override(self, interaction: discord.Interaction,
+                       command: str) -> None:
         """This command is used to override the bot's commands."""
-        from kumo_bot.config.settings import Config
-        config = Config(self.bot)
+        config = self.bot.config
 
         await interaction.response.defer(thinking=True)
         logging.info("Owner override triggered: %s", command)
@@ -68,17 +69,18 @@ class OwnerCommands(commands.Cog):
         elif command == "debugties":
             config.debug_tie = not config.debug_tie
             logging.info("Debug Tie toggled: %s", config.debug_tie)
-            await interaction.followup.send(f"Debug Tie toggled: {config.debug_tie}")
+            await interaction.followup.send(
+                f"Debug Tie toggled: {config.debug_tie}")
         else:
             await interaction.followup.send("Invalid override command.")
 
-    @app_commands.command(name="configuration",
-                          description="Displays the current configuration of the bot.")
-    @is_owner()
+    @app_commands.command(
+        name="configuration",
+        description="Displays the current configuration of the bot.")
+    @checks.is_owner()
     async def configuration(self, interaction: discord.Interaction) -> None:
         """This command is used to check the current configuration of the bot."""
-        from kumo_bot.config.settings import Config
-        config = Config(self.bot)
+        config = self.bot.config
 
         last_vote = await config.lastvote
         last_win = await config.lastwin
@@ -101,7 +103,8 @@ class OwnerCommands(commands.Cog):
             f"Debug Tie: {config.debug_tie}",
             color=0x00ff00,
         )
-        await interaction.response.send_message(embed=readable_config, ephemeral=True)
+        await interaction.response.send_message(embed=readable_config,
+                                                ephemeral=True)
 
 
 async def setup(bot):
