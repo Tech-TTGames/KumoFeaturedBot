@@ -97,7 +97,7 @@ class DebugBot(KumoBot):
                 else:
                     vote = "No vote message found."
 
-                result = f"User activity analysis:\n"
+                result = "User activity analysis:\n"
                 result += f"Active users (5+ messages): {len([u for u, c in usrlib.items() if c >= 5])}\n"
                 result += f"Total users: {len(usrlib)}\n"
                 if isinstance(vote, dict):
