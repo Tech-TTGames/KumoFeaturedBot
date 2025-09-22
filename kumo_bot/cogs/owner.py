@@ -1,7 +1,9 @@
 """Owner-only commands for the bot."""
 import asyncio
+import datetime
 import logging
 import os
+import re
 
 import discord
 from discord import app_commands
@@ -68,6 +70,70 @@ class OwnerCommands(commands.Cog):
             config.debug_tie = not config.debug_tie
             logging.info("Debug Tie toggled: %s", config.debug_tie)
             await interaction.followup.send(f"Debug Tie toggled: {config.debug_tie}")
+        
+        elif command == "testget":
+            # Test submission gathering functionality
+            submitted = []
+            submitees = []
+            channel = interaction.channel
+            await interaction.followup.send("Gathering submissions...")
+            
+            timed = discord.utils.utcnow() - datetime.timedelta(days=31)
+            async for message in channel.history(after=timed, limit=None):
+                if (message.content.startswith("https://") and 
+                    message.author not in submitees):
+                    url = re.search(r"(?P<url>https?://\S+)", message.content)
+                    if url not in submitted and url is not None:
+                        submitted.append(str(url.group("url")))
+                        submitees.append(message.author)
+            submitted = list(dict.fromkeys(submitted))
+            
+            result = f"Found {len(submitted)} submissions in the last 31 days"
+            if submitted:
+                result += f":\n" + "\n".join(submitted[:10])  # Limit to first 10
+            await interaction.user.send(result)
+            await interaction.followup.send("Results sent via DM.")
+            logging.debug("Test Gathering results: %s", submitted)
+        
+        elif command in ["testhistory", "testhist"]:
+            # Test vote history and user activity analysis
+            usrlib = {}
+            vote = {}
+            channel = config.channel
+            votemsg = await config.lastvote
+            
+            await interaction.followup.send("Analyzing vote history...")
+            
+            timed = discord.utils.utcnow() - datetime.timedelta(days=31)
+            async for message in channel.history(after=timed, limit=None):
+                if message.author not in usrlib:
+                    usrlib[message.author] = 1
+                else:
+                    usrlib[message.author] += 1
+            
+            if votemsg:
+                from kumo_bot.config.constants import EMOJI_ALPHABET
+                for reaction in votemsg.reactions:
+                    if reaction.emoji in EMOJI_ALPHABET:
+                        vote[reaction.emoji] = 0
+                        async for user in reaction.users():
+                            if user != self.bot.user and user in usrlib:
+                                if usrlib[user] >= 5:  # Activity threshold
+                                    vote[reaction.emoji] += 1
+            else:
+                vote = "No vote message found."
+            
+            result = f"**Vote History Analysis**\n"
+            result += f"Active users (5+ messages): {len([u for u, c in usrlib.items() if c >= 5])}\n"
+            result += f"Total users: {len(usrlib)}\n"
+            if isinstance(vote, dict):
+                result += f"Vote results: {vote}"
+            else:
+                result += vote
+            
+            await interaction.user.send(result)
+            await interaction.followup.send("Analysis sent via DM.")
+            logging.debug("Test History results: %s", vote)
         else:
             await interaction.followup.send("Invalid override command.")
 
