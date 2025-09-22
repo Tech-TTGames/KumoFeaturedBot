@@ -1,6 +1,7 @@
 """Custom checks for Discord commands."""
 import discord
 from discord import app_commands
+from discord.ext import commands
 
 from kumo_bot.config.settings import Config
 
@@ -19,41 +20,56 @@ def vote_running():
 
 
 def is_owner():
-    """Returns whether the user is the owner of the bot."""
+    """Returns whether the user is the owner of the bot using Discord.py app owner data."""
 
     async def predicate(ctx: discord.Interaction):
         """The predicate for the check."""
-        if ctx.user.id != 414075045678284810:
-            raise app_commands.CheckFailure(
-                "You are not the owner of this bot.")
+        app_info = await ctx.client.application_info()
+        if app_info.team:
+            # Bot is owned by a team
+            is_team_owner = ctx.user.id in [member.id for member in app_info.team.members]
+        else:
+            # Bot is owned by a single user
+            is_team_owner = ctx.user.id == app_info.owner.id
+            
+        if not is_team_owner:
+            raise app_commands.CheckFailure("You are not the owner of this bot.")
         return True
 
     return app_commands.check(predicate)
 
 
 def has_admin_role():
-    """Check if user has admin role or is owner."""
+    """Check if user has admin role, Administrator permission, or is owner."""
     
     async def predicate(interaction: discord.Interaction):
         """The predicate for the check."""
-        # Always allow owner
-        if interaction.user.id == 414075045678284810:
-            return True
-            
+        # Always allow app owner(s)
+        app_info = await interaction.client.application_info()
+        if app_info.team:
+            # Bot is owned by a team
+            if interaction.user.id in [member.id for member in app_info.team.members]:
+                return True
+        else:
+            # Bot is owned by a single user
+            if interaction.user.id == app_info.owner.id:
+                return True
+        
+        # Check if user has Administrator permission
+        if interaction.guild:
+            member = interaction.guild.get_member(interaction.user.id)
+            if member and member.guild_permissions.administrator:
+                return True
+        
+        # Check if user has the configured admin role
         config = Config(interaction.client)
         try:
-            # Check if user has the configured admin role
             if hasattr(config, 'role_id') and config.role_id:
                 member = interaction.guild.get_member(interaction.user.id) if interaction.guild else None
                 if member and any(role.id == config.role_id for role in member.roles):
                     return True
         except (ValueError, AttributeError):
             pass
-            
-        # Fallback to hardcoded role ID
-        member = interaction.guild.get_member(interaction.user.id) if interaction.guild else None
-        if member and any(role.id == 465888032537444353 for role in member.roles):
-            return True
             
         raise app_commands.CheckFailure("You don't have permission to use this command.")
     

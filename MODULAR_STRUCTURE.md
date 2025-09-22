@@ -16,10 +16,9 @@ kumo_bot/
 │   └── settings.py         # Configuration classes (Config, Secret)
 ├── cogs/                    # Discord.py cogs for command organization
 │   ├── __init__.py         # Auto-discovery of all cogs
-│   ├── admin.py            # Admin commands (blacklist, votecountmode, etc.)
+│   ├── admin.py            # Admin commands (ping, version, blacklist, votecountmode, etc.)
 │   ├── owner.py            # Owner-only commands (override, configuration)
 │   ├── voting.py           # Voting commands (startvote, endvote, etc.)
-│   ├── utility.py          # Utility commands (ping, version)
 │   └── events.py           # Event handlers (on_ready, on_command_error)
 └── utils/                   # Shared utilities
     ├── __init__.py
@@ -59,7 +58,9 @@ Basic utility commands:
 - `/version` - Display bot version
 
 ### AdminCommands (`kumo_bot/cogs/admin.py`)
-Administrative commands with role-based permissions:
+Administrative and utility commands with role-based permissions:
+- `/ping` - Check bot responsiveness
+- `/version` - Display bot version
 - `/blacklist` - Manage user blacklist
 - `/votecountmode` - Configure vote counting
 - `/accessrole` - Set bot access role
@@ -102,10 +103,10 @@ Configuration management classes:
 ## Utility Modules
 
 ### Checks (`kumo_bot/utils/checks.py`)
-Custom Discord command checks:
+Custom Discord command checks with improved permissions:
 - `@vote_running()` - Ensure a vote is currently active
-- `@is_owner()` - Restrict to bot owner
-- `@has_admin_role()` - Allow admin role or owner with proper fallback
+- `@is_owner()` - Restrict to bot owner using Discord.py app owner data
+- `@has_admin_role()` - Allow configured admin role, Administrator permission, or owner
 
 ### Downloaders (`kumo_bot/utils/downloaders.py`)
 File download utilities:
@@ -141,37 +142,7 @@ def start_bot():
     # Automatically detects mode from config.json and runs appropriate bot
 ```
 
-The original bot files now serve as simple entry points:
-
-### `bot_prod.py`
-Production mode entry point:
-```python
-from kumo_bot.bot import KumoBot
-
-def start():
-    bot = KumoBot()
-    bot.run_bot()
-```
-
-### `bot_debug.py`
-Debug mode entry point:
-```python
-from kumo_bot.debug_bot import DebugBot
-
-def start():
-    bot = DebugBot()
-    bot.run_bot()
-```
-
-### `bot_setup.py`
-Setup mode entry point:
-```python
-from kumo_bot.setup_bot import SetupBot
-
-def start():
-    bot = SetupBot()
-    bot.run_bot()
-```
+**Note**: The original bot files (`bot_prod.py`, `bot_debug.py`, `bot_setup.py`) have been removed as they were obsolete "launchpad" files that added unnecessary indirection.
 
 ## Benefits of Modular Structure
 
@@ -194,6 +165,8 @@ def start():
 - **NEW**: Owner commands separated into dedicated cog
 - **NEW**: Permission checks improved with owner override support
 - **NEW**: Bot control refactored to eliminate wrapper files
+- **NEW**: Utility commands consolidated into admin cog for better organization
+- **NEW**: Permission system uses Discord.py app owner data and Administrator permissions
 
 ## Adding New Features
 
