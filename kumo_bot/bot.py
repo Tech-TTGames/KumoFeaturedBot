@@ -13,8 +13,9 @@ from kumo_bot import cogs
 
 class KumoBot(commands.Bot):
     """Main bot class."""
+    debug: bool = False
 
-    def __init__(self):
+    def __init__(self, debug: bool = False, pfx: str | None = None):
         super().__init__(
             command_prefix=commands.when_mentioned,
             intents=intents,
@@ -26,10 +27,10 @@ class KumoBot(commands.Bot):
         self.config = Config(self)
         self.secret = Secret()
         self.root = pathlib.Path(__file__).parent.parent
-        self.debug = False
+        self.debug = debug
 
         # Set up command prefix from config
-        self.command_prefix = self.config.prefix
+        self.command_prefix = pfx or self.config.prefix
 
         # Set up logging
         self.l_handler = handler

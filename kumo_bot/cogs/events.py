@@ -27,7 +27,7 @@ class Events(commands.Cog):
             try:
                 await ctx.user.send(f"{ctx.command} can not be used in Private Messages.")
             except discord.HTTPException:
-                pass
+                logging.debug(f"User %s tried to use command in Private Messages.", ctx.user.name)
 
         elif isinstance(error, app_commands.CheckFailure):
             await ctx.response.send_message(error, ephemeral=True)
