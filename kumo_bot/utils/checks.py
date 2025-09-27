@@ -45,10 +45,8 @@ async def predicate_isadmin(interaction: discord.Interaction):
     else:
         return bypass
     # Check if user has Administrator permission
-    if interaction.guild:
-        member = interaction.guild.get_member(interaction.user.id)
-        if member and member.guild_permissions.administrator:
-            return True
+    if isinstance(interaction.user, discord.Member) and interaction.user.guild_permissions.administrator:
+        return True
     raise app_commands.CheckFailure("You don't have permission to use this command.")
 
 
@@ -70,8 +68,7 @@ def is_operator():
             return bypass
         config = interaction.client.config
         if hasattr(config, "role_id") and config.role_id:
-            member = (interaction.guild.get_member(interaction.user.id) if interaction.guild else None)
-            if member and any(role.id == config.role_id for role in member.roles):
+            if isinstance(interaction.user, discord.Member) and interaction.user.get_role(config.role_id):
                 return True
         raise app_commands.CheckFailure("You don't have permission to use this command.")
 
