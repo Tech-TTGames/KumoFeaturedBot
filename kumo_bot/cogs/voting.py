@@ -66,7 +66,7 @@ class VotingCommands(commands.Cog):
             submitted_old = voting.parse_votemsg(votemsg)
 
         role = config.mention
-        await interaction.response.defer(thinking=True)
+        await interaction.response.defer(thinking=True, ephemeral=True)
         async with intchannel.typing():
             timed = discord.utils.utcnow() - datetime.timedelta(days=31)
             async for message in intchannel.history(after=timed, limit=None):
