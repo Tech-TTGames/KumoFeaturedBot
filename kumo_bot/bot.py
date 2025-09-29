@@ -50,7 +50,6 @@ class KumoBot(commands.Bot):
                 logging.error("Failed to load cog %s: %s", extension, err)
         logging.info("Finished loading cogs.")
 
-
     def run_bot(self):
         """Run the bot."""
         self.run(self.secret.token, log_handler=handler, root_logger=True)

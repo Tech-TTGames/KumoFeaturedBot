@@ -119,7 +119,23 @@ class VotingCommands(commands.Cog):
                 deleted = await intchannel.purge(limit=None, check=lambda m: not m.pinned and m.author != self.bot.user)
                 logging.info("Cleared %d messages from channel", len(deleted))
             except discord.Forbidden:
-                await interaction.followup.send("Missing permissions to clear channel.", ephemeral=True)
+                logging.info("Failed to clear some messages from channel.")
+            explanation = False
+            async for message in intchannel.history(limit=3, oldest_first=True):
+                if message.author == self.bot.user and message.embeds:
+                    explanation = True
+                    break
+            if not explanation:
+                embd = discord.Embed(
+                    title="Suggestion Collection",
+                    description="Send suggestions here!\nSuggestions are accepted until the beginning of the vote.",
+                    color=0xb9f9fc,
+                ).add_field(name="One suggestion per user!",
+                            value="If you suggest more than one thing, all of the extra suggestions will be ignored."
+                           ).add_field(name="All suggestions must come with a link at the beginning of the message!",
+                                       value="They will be otherwise ignored as 'non-suggestions'.").set_footer(
+                                           text="This thread is not for conversation.")
+                await intchannel.send(embed=embd)
 
         # Set channel for voting
         config.channel = cha

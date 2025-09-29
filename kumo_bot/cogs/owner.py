@@ -84,28 +84,27 @@ class OwnerCommands(commands.Cog):
             title="Current Configuration",
             colour=discord.Colour.teal(),
             description=f"**MODE**: {config.mode}\n"
-                        f"**GUILD**: {config.guild.name}\n"
-                        f"**CHANNEL**: {config.channel.mention}\n"
-                        f"**BOT OPERATOR**: {config.role.mention}\n"
-                        f"**MENTION**: {config.mention.mention}\n"
-                        f"**LAST VOTE**: {last_vote.jump_url}\n"
-                        f"**LAST WIN**: {last_win.jump_url}\n"
-                        f"**CLOSETIME**: <t:{config.closetime}:f>\n"
-                        f"**CURRENTLY RUNNING**: {config.vote_running}\n"
-                        f"**OWNER ROLE**: <@&{config.owner_role}>\n"
-                        f"**VOTE COUNT MODE**: {config.vote_count_mode}\n"
-                        f"**DEBUG TIES**: {config.debug_tie}"
+            f"**GUILD**: {config.guild.name}\n"
+            f"**CHANNEL**: {config.channel.mention}\n"
+            f"**BOT OPERATOR**: {config.role.mention}\n"
+            f"**MENTION**: {config.mention.mention}\n"
+            f"**LAST VOTE**: {last_vote.jump_url}\n"
+            f"**LAST WIN**: {last_win.jump_url}\n"
+            f"**CLOSETIME**: <t:{config.closetime}:f>\n"
+            f"**CURRENTLY RUNNING**: {config.vote_running}\n"
+            f"**OWNER ROLE**: <@&{config.owner_role}>\n"
+            f"**VOTE COUNT MODE**: {config.vote_count_mode}\n"
+            f"**DEBUG TIES**: {config.debug_tie}",
         ).add_field(
             name="Currently Blacklisted",
-            value="\n".join([f"<@{a}>" for a in config.blacklist])
+            value="\n".join([f"<@{a}>" for a in config.blacklist]),
         ).add_field(
             name="Current Democracy:tm: users",
-            value="\n".join([a.mention for a in democracy])
+            value="\n".join([a.mention for a in democracy]),
         )
         await interaction.response.send_message(embed=readable_config,
                                                 ephemeral=True,
                                                 allowed_mentions=discord.AllowedMentions.none())
-
 
     @commands.command()
     @commands.dm_only()
