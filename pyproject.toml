@@ -21,7 +21,7 @@ optional = true
 
 [tool.poetry.group.dev.dependencies]
 yapf = "^0.43.0"
-pylint = "^3.3.8"
+pylint = "^4.0.0"
 
 [tool.yapf]
 based_on_style = "google"
