@@ -68,8 +68,7 @@ class VotingCommands(commands.Cog):
         role = config.mention
         await interaction.response.defer(thinking=True, ephemeral=True)
         async with intchannel.typing():
-            timed = discord.utils.utcnow() - datetime.timedelta(days=31)
-            async for message in intchannel.history(after=timed, limit=None):
+            async for message in intchannel.history(limit=None, oldest_first=True):
                 if message.content.startswith("https://") and (message.author not in submitees or allow_duplicates):
                     url = re.search(r"(?P<url>https?://\S+)", message.content)
                     if url is None or url in submitted_old or message.author.id in config.blacklist:

@@ -1,18 +1,26 @@
-FROM python:3.13-slim-trixie
-LABEL authors="techttgames"
-
-RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
-
-RUN curl -sSL https://install.python-poetry.org | python3 -
+FROM python:3.13-alpine AS build-stage
 
 WORKDIR /code
 
-ENV PATH="/root/.local/bin:$PATH"
+RUN pip install --no-cache-dir poetry poetry-plugin-export
 
-COPY poetry.lock pyproject.toml /code/
+COPY poetry.lock pyproject.toml ./
 
-RUN poetry config virtualenvs.create false && poetry install --no-interaction --no-ansi --no-root
+RUN poetry export -f requirements.txt --output requirements.txt --without-hashes --without dev
 
-COPY kumo_bot /code/kumo_bot/
+FROM python:3.13-alpine
+LABEL authors="techttgames"
+
+WORKDIR /app
+
+RUN adduser -S -u 1001 appuser && chown appuser .
+
+COPY --from=build-stage /code/requirements.txt .
+
+RUN pip install --no-cache-dir --no-deps -r requirements.txt
+
+COPY --chown=appuser kumo_bot /app/kumo_bot/
+
+USER appuser
 
 CMD ["python", "-m", "kumo_bot"]
