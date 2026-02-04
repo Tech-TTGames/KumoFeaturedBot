@@ -260,6 +260,10 @@ class VotingCommands(commands.Cog):
                 else:
                     usrlib[message.author] += 1
 
+            # Apply democracy™
+            for user in config.democracy:
+                usrlib[user] = float("inf")
+
             for key in constants.EMOJI_ALPHABET[:len(submitted)]:
                 vote[key] = 0
                 disreg_votes[key] = [0] * disreg_reqs
@@ -290,7 +294,7 @@ class VotingCommands(commands.Cog):
                             disreg_votes[reaction.emoji][int(user_messages)] += 1
                             disreg_total += 1
 
-        # Create results message
+        # Create a results message
         msg_text = "This week's featured results are:\n"
         for i in range(len(vote)):
             msg_text += (f"{constants.EMOJI_ALPHABET[i]} - {vote[constants.EMOJI_ALPHABET[i]]} vote" +
@@ -305,7 +309,7 @@ class VotingCommands(commands.Cog):
         win_id = None
         tiebreak = 0
 
-        # Advanced tie-breaking logic
+        # Advanced tiebreaking logic
         if len(win_candidates) > 1:
             for i in range(disreg_reqs - 1, -1, -1):
                 lvl_vals = {c: disreg_votes[c][i] for c in win_candidates}
