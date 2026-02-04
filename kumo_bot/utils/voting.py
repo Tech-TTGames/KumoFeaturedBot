@@ -24,6 +24,6 @@ def parse_votemsg(votemsg: discord.Message) -> list[tuple[str, str]]:
 
 def plurls(items: int) -> str:
     """Provide count of items, get s or nothing."""
-    if items == 0:
+    if items <= 1:
         return ""
     return "s"
