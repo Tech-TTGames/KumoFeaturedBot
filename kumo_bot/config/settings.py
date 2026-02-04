@@ -228,7 +228,7 @@ class Config:
                 member = self.guild.get_member(id_)
                 if member is None:
                     democracy_members.append(await self.guild.fetch_member(id_))
-                elif member is discord.Member:
+                elif isinstance(member, discord.Member):
                     democracy_members.append(member)
             return democracy_members
         except KeyError:

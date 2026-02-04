@@ -261,7 +261,8 @@ class VotingCommands(commands.Cog):
                     usrlib[message.author] += 1
 
             # Apply democracy™
-            for user in config.democracy:
+            democracy = await config.democracy
+            for user in democracy:
                 usrlib[user] = float("inf")
 
             for key in constants.EMOJI_ALPHABET[:len(submitted)]:
