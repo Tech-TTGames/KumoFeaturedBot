@@ -5,6 +5,7 @@ This is to keep the code clean and easy to read.
 Following the Tickets-Plus pattern for constant organization.
 """
 from logging.handlers import RotatingFileHandler
+import pathlib
 
 import discord
 
@@ -46,5 +47,10 @@ intents = discord.Intents.default()
 intents.message_content = True
 intents.messages = True
 
+# File Directory
+directory = pathlib.Path(__file__).parent.parent.parent
+ldir = directory / "logs"
+ldir.mkdir(parents=True, exist_ok=True)
+
 # Default logging handler
-handler = RotatingFileHandler(filename="discord.log", encoding="utf-8", mode="w", backupCount=10, maxBytes=100000)
+handler = RotatingFileHandler(filename=ldir / "discord.log", encoding="utf-8", mode="w", backupCount=10, maxBytes=100000)

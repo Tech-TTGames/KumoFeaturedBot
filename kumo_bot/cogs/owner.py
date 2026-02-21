@@ -8,6 +8,7 @@ from discord import app_commands
 from discord.ext import commands
 
 from kumo_bot.utils import checks
+from kumo_bot.config import constants
 
 
 class OwnerCommands(commands.Cog):
@@ -33,8 +34,7 @@ class OwnerCommands(commands.Cog):
 
         elif command == "log":
             logging.info("Sending Log...")
-            pth = self.bot.root
-            fpath = pth / "discord.log"
+            fpath = constants.ldir / "discord.log"
             await interaction.user.send(file=discord.File(fp=fpath))
             await interaction.followup.send("Sent!")
 
