@@ -603,14 +603,14 @@ voice = ["PyNaCl (>=1.5.0,<1.6)"]
 
 [[package]]
 name = "fanficfare"
-version = "4.54.0"
+version = "4.55.0"
 description = "A tool for downloading fanfiction to eBook formats"
 optional = false
 python-versions = ">=3.7"
 groups = ["main"]
 files = [
-    {file = "fanficfare-4.54.0-py3-none-any.whl", hash = "sha256:5b60ae35073fc5d38d4ea54e3c5ac445d49a2c604cf01a408efd9f8d52e62157"},
-    {file = "fanficfare-4.54.0.tar.gz", hash = "sha256:3f2a6db36ee4b12c7cafe9cba37c2ea7696d6dc6b227dd55c85dbe25c86b1367"},
+    {file = "fanficfare-4.55.0-py3-none-any.whl", hash = "sha256:bf53d69dcdcfab052a32c77dcee0369768a12abd98fe156814a89f0584b80682"},
+    {file = "fanficfare-4.55.0.tar.gz", hash = "sha256:2d68238704cd41da02aafac045e490bf795f331b4eec6e1488890b0dea52ba26"},
 ]
 
 [package.dependencies]
