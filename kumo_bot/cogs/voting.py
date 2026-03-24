@@ -333,7 +333,10 @@ class VotingCommands(commands.Cog):
         # Debug tie functionality for manual override
         if tiebreak and config.debug_tie:
             await channel.send("Stand by for Stalemate Resolution.")
-            owner = self.bot.application.owner
+            app_info = interaction.client.application
+            owner = app_info.owner
+            if app_info.team:
+                owner = choice(app_info.team.members)
             dm_channel = owner.dm_channel
             if dm_channel is None:
                 dm_channel = await owner.create_dm()

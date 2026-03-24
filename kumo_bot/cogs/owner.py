@@ -24,7 +24,7 @@ class OwnerCommands(commands.Cog):
         """This command is used to override the bot's commands."""
         config = self.bot.config
 
-        await interaction.response.defer(thinking=True)
+        await interaction.response.defer(thinking=True, ephemeral=True)
         logging.info("Owner override triggered: %s", command)
 
         if command == "reboot":

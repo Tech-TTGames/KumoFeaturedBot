@@ -18,7 +18,7 @@ def vote_running():
 
 async def predicate_isowner(interaction: discord.Interaction):
     """The predicate for the is_owner check."""
-    app_info = await interaction.client.application_info()
+    app_info = interaction.client.application
     if app_info.team:
         # Bot is owned by a team
         is_team_owner = interaction.user.id in [member.id for member in app_info.team.members]
