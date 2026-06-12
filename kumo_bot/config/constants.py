@@ -53,4 +53,10 @@ ldir = directory / "logs"
 ldir.mkdir(parents=True, exist_ok=True)
 
 # Default logging handler
-handler = RotatingFileHandler(filename=ldir / "discord.log", encoding="utf-8", mode="w", backupCount=10, maxBytes=100000)
+handler = RotatingFileHandler(
+    filename=ldir / "discord.log",
+    encoding="utf-8",
+    mode="w",
+    backupCount=10,
+    maxBytes=100000,
+)

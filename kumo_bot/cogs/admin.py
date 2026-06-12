@@ -46,6 +46,7 @@ class AdminCommands(commands.Cog):
         app_commands.Choice(name="Legacy (all messages)", value=1),
         app_commands.Choice(name="Modern (messages before vote)", value=0),
         app_commands.Choice(name="Modern+ (messages before vote, 10-25 required)", value=2),
+        app_commands.Choice(name="Bypass (no requirements)", value=3),
     ])
     async def votecountmode(self, interaction: discord.Interaction, mode: app_commands.Choice[int]) -> None:
         """This command is used to configure the vote count mode."""
