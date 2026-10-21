@@ -7,7 +7,7 @@ RUN adduser -S -u 1001 appuser && chown appuser .
 
 COPY --chown=appuser pyproject.toml uv.lock ./
 
-RUN uv sync --frozen --no-dev
+RUN uv sync --frozen --no-dev --no-install-project --python 3.14
 
 COPY --chown=appuser kumo_bot /app/kumo_bot/
 
