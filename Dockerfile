@@ -11,7 +11,7 @@ USER appuser
 
 RUN uv sync --frozen --no-dev --no-install-project --python 3.14
 
-COPY --chown=appuser kumo_bot /app/src/kumo_bot/
+COPY --chown=appuser kumo_bot /app/kumo_bot/
 COPY --chown=appuser README.md /app/
 
 RUN uv sync --frozen --no-dev
