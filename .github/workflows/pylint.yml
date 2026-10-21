@@ -5,27 +5,15 @@ on: [push]
 jobs:
   build:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        python-version: ["3.13"]
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v5
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v6
+      uses: actions/checkout@main
+    - name: Install uv
+      uses: astral-sh/setup-uv@v10.3.1
       with:
-        python-version: ${{ matrix.python-version }}
-    - name: Load cached Poetry installation
-      id: cached-poetry
-      uses: actions/cache@v4
-      with:
-        path: ~/.local  # the path depends on the OS
-        key: poetry-0  # increment to reset cache
-    - name: Install Poetry
-      if: steps.cached-poetry.outputs.cache-hit != 'true'
-      uses: snok/install-poetry@v1
+        enable-cache: true
+        cache-python: true
     - name: Install poetry requirements
-      run: poetry install --with dev
+      run: uv sync --dev
     - name: Analysing the code with pylint
-      run: |
-        poetry run pylint $(git ls-files '*.py')
+      run: uv run pylint $(git ls-files '*.py') --fail-under 10
