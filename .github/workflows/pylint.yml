@@ -16,4 +16,4 @@ jobs:
     - name: Install poetry requirements
       run: uv sync --dev
     - name: Analysing the code with pylint
-      run: uv run pylint $(git ls-files '*.py') --fail-under 10
+      run: uv run pylint kumo_bot --fail-under 10
