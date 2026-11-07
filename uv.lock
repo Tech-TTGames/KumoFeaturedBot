@@ -543,7 +543,7 @@ wheels = [
 
 [[package]]
 name = "fanficfare"
-version = "4.62.0"
+version = "4.63.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "apsw" },
@@ -558,9 +558,9 @@ dependencies = [
     { name = "requests-file" },
     { name = "urllib3" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/92/24/a394ed6de5daf39237ce371cac34a72cd6936608b278d7568a43ef99c288/fanficfare-4.62.0.tar.gz", hash = "sha256:eee865d46b0b863cab470c6c7e60d59e102d25d4cea096ca08491337ab81b69e", size = 432720, upload-time = "2026-10-03T15:16:07.124Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/ca/bc/987888bfdc83399441b972e5b556228d8322add50931a7f900799e3b21c6/fanficfare-4.63.0.tar.gz", hash = "sha256:21338d88297303b09a64f00dab5982b0760902d91829629d66c162c98feba9ef", size = 441885, upload-time = "2026-11-02T14:22:53.468Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/6a/16/aed24d6554ff349adbd56c0db06789221bf267f25d5cf0b3d8aff0113c36/fanficfare-4.62.0-py3-none-any.whl", hash = "sha256:041871ce2b5860e739900a6a5af5d2aa51c4ddc11c906f033d9d5274f2cf12d9", size = 597468, upload-time = "2026-10-03T15:16:04.135Z" },
+    { url = "https://files.pythonhosted.org/packages/1c/6e/5e133984baa262b60e26db86e1ab68afab57936a9b75a67af867737598a2/fanficfare-4.63.0-py3-none-any.whl", hash = "sha256:d417cfb08a96f7a4a763404fed03c7f6f9fec481c1bc96a55b498121b909df39", size = 605171, upload-time = "2026-11-02T14:22:50.184Z" },
 ]
 
 [[package]]
